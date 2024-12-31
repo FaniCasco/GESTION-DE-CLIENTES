@@ -1,0 +1,59 @@
+.App {
+  text-align: center;
+  
+}
+
+.bg-lista {
+  background-color: #003366;
+  color: #f8f9fa;
+}
+.custom-shadow {
+  border: 1px solid #ccc; /* Borde más claro */
+  box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.3); /* Sombra más oscura */
+  border-radius: 8px; /* Esquinas redondeadas */
+  margin-bottom: 2rem; /* Espacio inferior */
+}
+
+.custom-table {
+  background-color: #ffffff; /* Fondo blanco */
+  border-radius: 8px; /* Bordes redondeados */
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* Sombra ligera */
+  overflow: hidden; /* Para evitar que sobresalgan bordes */
+}
+
+.custom-table thead {
+  background-color: #e9ecef; /* Fondo claro para el encabezado */
+  color: #333; /* Texto oscuro para mejor legibilidad */
+}
+
+.custom-table tbody tr:hover {
+  background-color: #f8f9fa; /* Color al pasar el ratón */
+}
+
+.custom-table th,
+.custom-table td {
+  padding: 1rem; /* Espaciado interno */
+  text-align: center; /* Centra el contenido */
+}
+
+
+.bg-nav {
+  background-color: #003366;
+  
+}
+.bg-agregar {
+  background-color: #003366; /* Cambiar por el color deseado */
+  color: #fff;
+}
+
+footer {
+  background-color: #003366;
+  font-size: 0.9rem;
+  line-height: 1;
+}
+footer a {
+  text-decoration: none;
+}
+footer a:hover {
+  text-decoration: underline;
+}
