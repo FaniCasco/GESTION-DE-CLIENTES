@@ -18,10 +18,11 @@
     "redux": "^5.0.1"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "start": "react-scripts start",    
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
+    
   },
   "proxy": "http://localhost:3001",
   "eslintConfig": {
@@ -41,5 +42,30 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+
+  "build": {
+    "appId": "com.FaniCas.frontend",  
+    "productName": "Sistema de gestión de clientes",  
+    "files": [
+      "build/**/*",
+      "src/**/*"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis", 
+      "icon": "build/icon.ico"  
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "build/icon.icns"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "build/icon.png"
+    },
+    "entry": "build/electron.js"  
   }
 }

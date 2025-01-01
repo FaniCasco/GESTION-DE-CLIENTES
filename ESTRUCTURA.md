@@ -1,0 +1,47 @@
+```
+└── 📁frontend
+    └── 📁public
+        └── 📁assets
+            └── 📁img
+                └── logo.png
+        └── index.html
+    └── 📁src
+        └── 📁api
+            └── api.js
+        └── 📁app
+        └── App.css
+        └── App.js
+            └── store.js
+        └── 📁components
+            └── AddInquilino.js
+            └── Footer.js
+            └── Home.js
+            └── InquilinoForm.js
+            └── InquilinosList.js
+            └── Navbar.js
+        └── 📁features
+            └── 📁inquilinos
+                └── inquilinosSlice.js
+                └── useInquilinos.js
+            └── 📁otro
+        └── index.css
+        └── index.js
+    └── .env
+    └── .gitignore
+    └── package-lock.json
+    └── package.json
+    └── README.md
+``````
+└── 📁server
+    └── 📁src
+        └── app.js
+        └── 📁config
+            └── db.js
+        └── 📁controllers
+            └── inquilinosController.js
+        └── 📁routes
+            └── inquilinosRoutes.js
+    └── .env
+    └── index.js
+    └── package-lock.json
+    └── package.json
