@@ -4,7 +4,8 @@
   "private": true,
   "dependencies": {
     "@reduxjs/toolkit": "^2.5.0",
-    "@tanstack/react-query": "^5.62.11",
+    "@tanstack/react-query": "^5.62.14",
+    "@tauri-apps/api": "^2.2.0",
     "axios": "^1.7.9",
     "bootstrap-icons": "^1.11.3",
     "cra-template": "1.2.0",
@@ -14,16 +15,19 @@
     "react-modal": "^3.16.3",
     "react-redux": "^9.2.0",
     "react-router-dom": "^6.28.1",
-    "react-scripts": "5.0.1",
+    "react-scripts": "^5.0.1",
     "redux": "^5.0.1"
   },
-  "scripts": {
-    "start": "react-scripts start",    
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
-    
-  },
+  "homepage": "./",
+"scripts": { 
+  "build": "react-scripts build",
+  "test": "react-scripts test",
+  "eject": "react-scripts eject",
+  "start-backend": "node ./server/src/index.js", 
+  "start-frontend": "react-scripts start",
+  "start": "concurrently \"npm run start-backend\" \"npm run start-frontend\""
+},
+
   "proxy": "http://localhost:3001",
   "eslintConfig": {
     "extends": [
@@ -42,30 +46,5 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  },
-
-  "build": {
-    "appId": "com.FaniCas.frontend",  
-    "productName": "Sistema de gestión de clientes",  
-    "files": [
-      "build/**/*",
-      "src/**/*"
-    ],
-    "directories": {
-      "output": "dist"
-    },
-    "win": {
-      "target": "nsis", 
-      "icon": "build/icon.ico"  
-    },
-    "mac": {
-      "target": "dmg",
-      "icon": "build/icon.icns"
-    },
-    "linux": {
-      "target": "AppImage",
-      "icon": "build/icon.png"
-    },
-    "entry": "build/electron.js"  
   }
 }

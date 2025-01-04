@@ -1,9 +1,45 @@
-```
+CLIENTES
 └── 📁frontend
+    └── 📁build
+        └── asset-manifest.json
+        └── 📁assets
+            └── 📁img
+                └── logo.png
+        └── 📁fonts
+            └── 📁Karla
+                └── Karla-Italic-VariableFont_wght.ttf
+                └── Karla-VariableFont_wght.ttf
+                └── OFL.txt
+                └── README.txt
+                └── 📁static
+                └── 📁Poppins
+                             └── SourGummy-ThinItalic.ttf
+        └── index.html
+        └── 📁static
+            └── 📁css
+                └── main.7f9c55e0.css
+                └── main.7f9c55e0.css.map
+            └── 📁js
+                └── main.b53c6b2e.js
+                └── main.b53c6b2e.js.LICENSE.txt
+                └── main.b53c6b2e.js.map
+            └── 📁media
+                └── bootstrap-icons.39795c0b4513de014cf8.woff
+                └── bootstrap-icons.b7bcc075b395c14ce8c2.woff2
+                └── Poppins-Thin.59ff6a729e30c99b478e.ttf
     └── 📁public
         └── 📁assets
             └── 📁img
                 └── logo.png
+        └── 📁fonts
+            └── 📁Karla
+                └── Karla-Italic-VariableFont_wght.ttf
+                └── Karla-VariableFont_wght.ttf
+                └── OFL.txt
+                └── README.txt
+                └── 📁static
+                 └── 📁Poppins
+                             └── SourGummy-ThinItalic.ttf
         └── index.html
     └── 📁src
         └── 📁api
@@ -30,8 +66,7 @@
     └── .gitignore
     └── package-lock.json
     └── package.json
-    └── README.md
-``````
+    └── setupProxy.js
 └── 📁server
     └── 📁src
         └── app.js
@@ -45,3 +80,64 @@
     └── index.js
     └── package-lock.json
     └── package.json
+📁src-tauri
+└── 📁capabilities
+        └── default.json
+    └── 📁gen
+        └── 📁schemas
+            └── acl-manifests.json
+            └── capabilities.json
+            └── desktop-schema.json
+            └── windows-schema.json
+    └── 📁icons
+└── 📁src
+        └── lib.rs
+        └── main.rs
+    └── 📁target
+        └── .rustc_info.json
+        └── 📁debug
+            └── .cargo-lock
+            └── 📁.fingerprint
+                └── 📁adler2-5a326e8c1cfdfe6e
+otros archivos..
+ └── .gitignore
+    └── build.rs
+    └── Cargo.lock
+    └── Cargo.toml
+    └── package-lock.json
+    └── package.json
+    └── tauri.conf.json
+└── 📁src-tauri
+    └── 📁capabilities
+        └── default.json
+    └── 📁gen
+        └── 📁schemas
+            └── acl-manifests.json
+            └── capabilities.json
+            └── desktop-schema.json
+            └── windows-schema.json
+    └── 📁icons
+        └── 128x128.png
+        └── 128x128@2x.png
+        └── 32x32.png
+        └── icon.icns
+        └── icon.ico
+        └── icon.png
+        └── Square107x107Logo.png
+        └── Square142x142Logo.png
+        └── Square150x150Logo.png
+        └── Square284x284Logo.png
+        └── Square30x30Logo.png
+        └── Square310x310Logo.png
+        └── Square44x44Logo.png
+        └── Square71x71Logo.png
+        └── Square89x89Logo.png
+        └── StoreLogo.png
+    └── 📁src
+        └── lib.rs
+        └── main.rs
+    └── .gitignore
+    └── build.rs
+    └── Cargo.lock
+    └── Cargo.toml
+    └── tauri.conf.json

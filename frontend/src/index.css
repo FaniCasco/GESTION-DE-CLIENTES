@@ -1,6 +1,12 @@
+@font-face {
+  font-family: 'Poppins';
+  src: url('../public/fonts/Poppins/Poppins-Medium.ttf') format('woff2');
+} 
+
+
 body {
-  background-color: #f5f5dc; /* Beige claro */
-  font-family: 'Open Sans', sans-serif; /* Si ya tienes otra fuente, déjala aquí */
+  background-color: #f5f5dc; 
+  font-family: 'Open Sans', sans-serif; 
   margin: 0;
   padding: 0;
 }
