@@ -3,6 +3,7 @@ import { useInquilinos } from "../features/inquilinos/useInquilinos";
 import Modal from "react-modal";
 import { useForm } from "react-hook-form";
 
+
 Modal.setAppElement("#root");
 
 const InquilinosList = () => {
@@ -42,7 +43,7 @@ const InquilinosList = () => {
       }
     }
   };
-  
+
   const onSubmit = async (data) => {
     try {
       const updatedInquilino = { ...selectedInquilino, ...data };
@@ -66,6 +67,115 @@ const InquilinosList = () => {
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
   };
+  const preloadImage = (url) => {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.src = url;
+        img.onload = resolve;
+        img.onerror = reject;
+    });
+};
+
+  const handlePrint = async (inquilino) => {
+    await preloadImage('../assets/img/logo.png'); 
+    const printWindow = window.open('', '', 'height=600,width=800');
+    // Estructura básica del HTML
+    printWindow.document.write('<html><head><title>Recibo de Alquiler</title>');
+
+    // Incluir estilos de Bootstrap
+    printWindow.document.write(`
+      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+      <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .card { padding: 30px; border-radius: 10px; border: 1px solid rgb(14, 9, 9); max-width: 900px; margin: 0 auto; }
+        img { max-width: 150px; height: auto; }
+        .border-bottom { border-bottom: 1px solid #000; height: 2rem; }
+        .h5, .h6 { color: #4a90e2; }
+      </style>
+    `);
+
+    printWindow.document.write('</head><body>');
+
+    // Estructura del recibo
+    printWindow.document.write(`
+      <div class="card shadow-sm p-4">
+        <div class="mb-4">
+          <div class="row align-items-center">
+            <div class="col-md-4 text-center">
+      <img src="../assets/img/logo.png" alt="Logo" />
+           
+            </div>
+            <div class="col-md-4">
+              <h6 class="fw-bold">MS INMOBILIARIA</h6>
+              <p class="mb-1">Av. San Martín 353, Gdor Crespo, Tel: 3498 - 478730</p>
+              <p class="text-muted mb-1">Emitido el: ${new Date().toLocaleDateString()}</p>
+            </div>
+            <div class="col-md-4 text-center">
+              <h2 class="h4">Recibo de Alquiler</h2>
+            </div>
+          </div>
+        </div>
+  
+        <div class="row mb-4 border-top pt-4">
+          <div class="col-md-6">
+            <h5 class="fw-bold">Propietario</h5>
+            <p class="mb-1">${inquilino.propietario_nombre}</p>
+            <p class="mb-1">${inquilino.propietario_direccion}</p>
+            <p class="mb-1">${inquilino.propietario_localidad}</p>
+          </div>
+          <div class="col-md-6">
+            <h5 class="fw-bold">Inquilino</h5>
+            <p class="mb-1">${inquilino.nombre} ${inquilino.apellido}</p>
+            <p class="mb-1">Teléfono: ${inquilino.telefono}</p>
+          </div>
+        </div>
+  
+        <div class="row mb-4 border-top pt-4">
+          <div class="col-md-6">
+            <h5 class="fw-bold">Detalles del Alquiler</h5>
+            <ul class="list-unstyled">
+              <li><strong>Periodo:</strong> ${inquilino.periodo}</li>
+              <li><strong>Contrato:</strong> ${inquilino.contrato}</li>
+              <li><strong>Aumento:</strong> ${inquilino.aumento}</li>
+              <li><strong>Estado:</strong> ${inquilino.alquileres_adeudados > 0 ? `${inquilino.alquileres_adeudados} meses adeudados` : "Al día"}</li>
+              <li><strong>Alq. adeudados:</strong> ${inquilino.alquileres_adeudados}</li>
+              <li><strong>Deudas de gastos:</strong> ${inquilino.gastos_adeudados}</li>
+            </ul>
+          </div>
+  
+          <div class="col-md-6">
+            <h5 class="fw-bold">Detalles de Liquidación</h5>
+            <ul class="list-unstyled">
+              <li><strong>Alquileres:</strong> $${inquilino.alquileres_importe}</li>
+              <li><strong>Agua:</strong> $${inquilino.agua_importe}</li>
+              <li><strong>Tasa:</strong> $${inquilino.tasa_importe}</li>
+              <li><strong>Otros:</strong> $${inquilino.otros}</li>
+              <li><strong>Importe Total:</strong> $${inquilino.importe_total}</li>
+            </ul>
+          </div>
+        </div>
+  
+        <div class="border-top pt-3">
+          <div class="row text-center mt-4">
+            <div class="col-6">
+              <p class="mb-1">Firma del Propietario</p>
+              <div class="border-bottom"></div>
+            </div>
+            <div class="col-6">
+              <p class="mb-1">Firma del Inquilino</p>
+              <div class="border-bottom"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `);
+
+    printWindow.document.write('</body></html>');
+    printWindow.document.close();
+    printWindow.print();
+  };
+
+
 
   if (isLoading) {
     return <p>Cargando inquilinos...</p>;
@@ -87,8 +197,6 @@ const InquilinosList = () => {
         inquilino.propietario_apellido?.toLowerCase().includes(searchLower) ||
         inquilino.propietario_direccion?.toLowerCase().includes(searchLower) ||
         inquilino.alquileres_adeudados?.toString().includes(searchLower)
-
-
       );
     })
     .sort((a, b) => a.nombre.localeCompare(b.nombre));
@@ -105,7 +213,7 @@ const InquilinosList = () => {
         <input
           type="text"
           className="form-control"
-          placeholder="Buscar por ID, Nombre, Apellido, Alquileres adeudados (si/no) o Propietario"
+          placeholder="Buscar por ID, Nombre, Apellido, Alquileres adeudados (si debe/no debe) o Propietario"
           value={searchTerm}
           onChange={handleSearchChange}
         />
@@ -149,6 +257,13 @@ const InquilinosList = () => {
                   onClick={() => handleDeleteClick(inquilino.id)}
                 >
                   <i className="bi bi-trash"></i>
+                </button>
+                <button
+                  className="btn btn-sm"
+                  style={{ backgroundColor: "#28a745", color: "#fff" }}
+                  onClick={() => handlePrint(inquilino)} // Botón de imprimir
+                >
+                  <i className="bi bi-printer"></i>
                 </button>
               </td>
             </tr>
@@ -225,6 +340,7 @@ const InquilinosList = () => {
                 Cerrar
               </button>
             </div>
+
           </form>
         )}
       </Modal>
@@ -233,6 +349,13 @@ const InquilinosList = () => {
 };
 
 export default InquilinosList;
+
+
+
+
+
+
+
 
 
 

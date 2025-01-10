@@ -97,8 +97,8 @@ const InquilinoForm = () => {
             className={`form-control ${errors[campo.name] ? 'is-invalid' : ''}`}
             {...register(campo.name, campo.required ? { required: `${campo.label} es obligatorio` } : {})}
           >
-            <option value="true">Sí</option>
-            <option value="false">No</option>
+            <option value="true">Sí debe</option>
+            <option value="false">No debe</option>
           </select>
           {errors[campo.name] && <span className="text-danger">{errors[campo.name].message}</span>}
         </div>

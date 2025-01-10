@@ -1,27 +1,33 @@
 const express = require("express");
 const cors = require("cors");
-const bodyParser = require("body-parser");
 const inquilinosRoutes = require("./routes/inquilinosRoutes");
+const authRoutes = require("./routes/authRoutes");
 
 const app = express();
+app.options('*', cors());
 
-// Middlewares
-//app.use(cors());
-app.use(bodyParser.json());
+
+// Habilitar CORS de forma global
 app.use(cors({
-  origin: 'http://localhost:3000', // Dominio del frontend
+  origin: 'http://localhost:3000',  // Permite solicitudes desde el frontend
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true,  // Si necesitas enviar cookies o tokens en las cabeceras
 }));
 
+
+// Middleware para parsear JSON
+app.use(express.json());
 
 // Ruta de prueba inicial
 app.get("/", (req, res) => {
   res.send("Servidor funcionando correctamente.");
 });
 
+// Registrar rutas de autenticación
+app.use("/api/auth", authRoutes);
+
 // Registrar rutas CRUD de inquilinos
 app.use("/api/inquilinos", inquilinosRoutes);
-
 
 module.exports = app;
 

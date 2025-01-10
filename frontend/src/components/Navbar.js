@@ -1,9 +1,21 @@
-// frontend/src/components/Navbar.js
-
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Navbar = () => {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    // Eliminar el token de localStorage
+    localStorage.removeItem('token');
+    // Redirigir al usuario al login
+    navigate('/login');
+  };
+
+  // Verificar si el usuario está autenticado
+  const isAuthenticated = () => {
+    return !!localStorage.getItem('token'); // Verifica si hay un token almacenado
+  };
+
   return (
     <nav className="navbar navbar-expand-lg navbar-dark bg-nav shadow-sm">
       <div className="container">
@@ -40,6 +52,17 @@ const Navbar = () => {
                 <i className="bi bi-person-plus-fill me-2"></i>Agregar Nuevo
               </Link>
             </li>
+            {/* Mostrar el botón de salir solo si el usuario está autenticado */}
+            {isAuthenticated() && (
+              <li className="nav-item">
+                <button 
+                  className="btn btn-danger nav-link text-white" 
+                  onClick={handleLogout}
+                >
+                  <i className="bi bi-box-arrow-right me-2"></i>Salir
+                </button>
+              </li>
+            )}
           </ul>
         </div>
       </div>
@@ -48,5 +71,3 @@ const Navbar = () => {
 };
 
 export default Navbar;
-
-
