@@ -4,9 +4,7 @@ CLIENTES
         └── asset-manifest.json
         └── 📁assets
         └── 📁fonts
-              
         └── index.html
-              
     └── 📁public
         └── 📁assets
             └── favicon.ico
@@ -19,9 +17,10 @@ CLIENTES
             └── api.js
             └── auth.js
         └── 📁app
-        └── App.css
-        └── App.js
             └── store.js
+        └── 📁assets
+            └── 📁img
+                └── logo.png
         └── 📁components
             └── AddInquilino.js
             └── Footer.js
@@ -29,14 +28,19 @@ CLIENTES
             └── InquilinoForm.js
             └── InquilinosList.js
             └── Login.js
+            └── ModalInquilino.js
             └── Navbar.js
+            └── Recibo.js
         └── 📁features
             └── 📁inquilinos
                 └── inquilinosSlice.js
                 └── useInquilinos.js
         └── index.css
+        └── App.js
         └── index.js
-        └── Login.css
+        └── App.css
+        └── Login.js
+        └── recibo.css
     └── .env
     └── .gitignore
     └── package-lock.json
