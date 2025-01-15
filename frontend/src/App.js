@@ -3,21 +3,16 @@ import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-d
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './components/Home';
+import Login from './components/Login';
 import InquilinosList from './components/InquilinosList';
 import InquilinoForm from './components/InquilinoForm';
-import Login from './components/Login';
 
 import './App.css';
-import './index.css';
-import "bootstrap-icons/font/bootstrap-icons.css";
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-
-// Función para verificar si el usuario está autenticado
 const isAuthenticated = () => {
-  return !!localStorage.getItem('token'); // Verifica si hay un token almacenado
+  return !!localStorage.getItem('token');
 };
-
 
 function App() {
   return (
@@ -26,12 +21,10 @@ function App() {
         <Navbar />
         <div className="container mt-4 flex-grow-1">
           <Routes>
-            {/* Redirigir al Login si no está autenticado */}
             <Route
               path="/"
               element={isAuthenticated() ? <Home /> : <Navigate to="/login" />}
             />
-
             <Route path="/login" element={<Login />} />
             <Route
               path="/inquilinos"
@@ -54,6 +47,7 @@ function App() {
 }
 
 export default App;
+
 
 
 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import '../Login.css'; 
+import '../Login.css';
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -12,27 +12,21 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Intentar la solicitud de login
       const response = await axios.post('http://localhost:3001/api/auth/login', {
         username,
         password,
       });
-      console.log('Respuesta del servidor:', JSON.stringify(response.data, null, 2));  // Ver los datos de la respuesta
   
-      // Almacenar el token recibido en localStorage
+      console.log('Respuesta del servidor:', response.data); // Asegúrate de imprimir la estructura
       localStorage.setItem('token', response.data.token);
-      
-      // Redirigir al home (si el login fue exitoso)
+  
       navigate('/');
     } catch (err) {
-      // Si ocurre un error, mostrar el mensaje
       console.error('Error al iniciar sesión:', err);
       setError('Credenciales inválidas. Intenta de nuevo.');
     }
   };
   
-  
-
   return (
     <div className="login-container">
       <div className="card shadow-sm">
@@ -69,3 +63,4 @@ const Login = () => {
 };
 
 export default Login;
+

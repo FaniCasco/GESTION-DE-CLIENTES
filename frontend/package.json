@@ -25,9 +25,8 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "start-backend": "node ./server/src/index.js",
     "start-frontend": "react-scripts start",
-    "start": "concurrently \"npm run start-backend\" \"npm run start-frontend\""
+    "start": "concurrently \"npm run start-frontend\""
   },
   "proxy": "http://localhost:3001",
   "eslintConfig": {

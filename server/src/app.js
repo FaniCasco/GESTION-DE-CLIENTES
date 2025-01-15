@@ -2,7 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const inquilinosRoutes = require("./routes/inquilinosRoutes");
 const authRoutes = require("./routes/authRoutes");
-
+const path = require('path');
 const app = express();
 app.options('*', cors());
 
@@ -28,6 +28,14 @@ app.use("/api/auth", authRoutes);
 
 // Registrar rutas CRUD de inquilinos
 app.use("/api/inquilinos", inquilinosRoutes);
+
+// Sirve los archivos estáticos del frontend
+app.use(express.static(path.join(__dirname, '../../frontend/build')));
+
+// Redirige todas las rutas no manejadas al index.html del frontend
+app.get('*', (req, res) => {
+    res.sendFile(path.resolve(__dirname, '../../frontend/build', 'index.html'));
+});
 
 module.exports = app;
 
