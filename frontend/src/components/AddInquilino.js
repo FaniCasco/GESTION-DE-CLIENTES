@@ -39,3 +39,16 @@ const AddInquilino = () => {
 };
 
 export default AddInquilino;
+
+
+
+
+
+
+
+
+
+
+
+
+

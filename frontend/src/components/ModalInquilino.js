@@ -13,10 +13,11 @@ const ModalInquilino = ({ selectedInquilino }) => {
           <div className="mb-2" key={key}>
             <label className="form-label">{key}</label>
             <input
-              type="text"
-              className="form-control"
-              value={selectedInquilino[key]}
-              readOnly
+                type="text"
+                className="form-control"
+                value={selectedInquilino[key]}
+                readOnly
+                aria-label={key}
             />
           </div>
         ))}
