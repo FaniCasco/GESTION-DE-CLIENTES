@@ -10,17 +10,28 @@ const Login = ({ setIsAuthenticated }) => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
+  const [loading, setLoading] = useState(false);
+
   const handleLogin = async (e) => {
     e.preventDefault();
+    setLoading(true); // Bloquea el botón
     try {
       const response = await api.post('/auth/login', { username, password });
       localStorage.setItem('token', response.data.token);
-      setIsAuthenticated(true); // Actualiza el estado global
-      navigate('/'); // Redirige al home
+      setIsAuthenticated(true);
+      navigate('/');
     } catch (err) {
-      setError('Credenciales inválidas. Inténtalo de nuevo.');
+      if (err.response && err.response.status === 401) {
+        setError('Credenciales incorrectas. Verifique su nombre de usuario y contraseña.');
+      } else {
+        setError('Hubo un error inesperado. Inténtelo más tarde.');
+      }
+    } finally {
+      setLoading(false); // Desbloquea el botón
     }
-  };
+
+    };
+    
 
   return (
     <div className="container">
@@ -39,6 +50,8 @@ const Login = ({ setIsAuthenticated }) => {
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     required
+                    placeholder="Ingrese su nombre de usuario"
+                    aria-label="Nombre de usuario"
                   />
                 </div>
                 <div className="form-group mt-3">
@@ -50,6 +63,8 @@ const Login = ({ setIsAuthenticated }) => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    placeholder="Ingrese su contraseña"
+                    aria-label="Contraseña"
                   />
                 </div>
                 {error && <div className="alert alert-danger mt-3">{error}</div>}

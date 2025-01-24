@@ -1,0 +1,5 @@
+#Con esto hacemos el archivo backup de la bbdd inicial
+pg_dump -U postgres -h localhost -p 5432 -F c -b -v -f inquilinos_backup.backup inquilinos
+
+#Con esto hacemos la restauracion de la bbdd al intalar la app en otra maquina
+pg_restore -U postgres -h localhost -p 5432 -d inquilinos -v inquilinos_backup.backup

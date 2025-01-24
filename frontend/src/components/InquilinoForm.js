@@ -1,14 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/api';
 import { useForm } from 'react-hook-form';
+import Swal from 'sweetalert2'; // Importar SweetAlert2
+import 'sweetalert2/dist/sweetalert2.min.css';
 
 const InquilinoForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { register, handleSubmit, setValue, reset, formState: { errors } } = useForm();
-  const [error, setError] = useState(null);
-  const [message, setMessage] = useState(null);
 
   useEffect(() => {
     const fetchInquilino = async () => {
@@ -18,7 +18,12 @@ const InquilinoForm = () => {
           Object.keys(response.data).forEach((key) => setValue(key, response.data[key]));
         } catch (err) {
           console.error('Error al cargar el inquilino:', err);
-          setError('No se pudieron cargar los datos del inquilino.');
+          Swal.fire({
+            title: 'Error',
+            text: 'No se pudieron cargar los datos del inquilino.',
+            icon: 'error',
+            confirmButtonText: 'Aceptar',
+          });
         }
       } else {
         reset();
@@ -37,27 +42,54 @@ const InquilinoForm = () => {
       agua_importe: parseFloat(data.agua_importe) || 0,
       tasa_importe: parseFloat(data.tasa_importe) || 0,
       otros: parseFloat(data.otros) || 0,
-      alquileres_adeudados: data.alquileres_adeudados === 'true', // Convertir a booleano
-      gastos_adeudados: data.gastos_adeudados === 'true', // Convertir a booleano
+      alquileres_adeudados: data.alquileres_adeudados === 'true' ? 'si debe' : 'no debe',
+      gastos_adeudados: data.gastos_adeudados === 'true' ? 'si debe' : 'no debe',
     };
-
+  
     try {
       if (id) {
         await api.put(`/inquilinos/${id}`, formattedData);
-        setMessage('Inquilino actualizado correctamente');
+        Swal.fire({
+          title: '¡Inquilino Actualizado!',
+          text: 'Los datos del inquilino se han actualizado correctamente.',
+          icon: 'success',
+          confirmButtonText: 'Aceptar',
+        });
       } else {
         await api.post('/inquilinos', formattedData);
-        setMessage('Inquilino agregado correctamente');
+        Swal.fire({
+          title: '¡Inquilino Agregado!',
+          text: 'El nuevo inquilino se ha registrado correctamente.',
+          icon: 'success',
+          confirmButtonText: 'Aceptar',
+        });
       }
       navigate('/inquilinos');
     } catch (err) {
       console.error('Error al guardar los datos:', err);
-      setError('Error al guardar los datos.');
+      Swal.fire({
+        title: 'Error',
+        text: 'Hubo un problema al guardar los datos del inquilino. Inténtalo nuevamente.',
+        icon: 'error',
+        confirmButtonText: 'Aceptar',
+      });
     }
   };
+  
 
   const handleCancel = () => {
-    navigate(-1);
+    Swal.fire({
+      title: '¿Estás seguro?',
+      text: 'Los cambios no guardados se perderán.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Sí, salir',
+      cancelButtonText: 'Cancelar',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        navigate(-1);
+      }
+    });
   };
 
   const camposInquilino = [
@@ -87,7 +119,7 @@ const InquilinoForm = () => {
   ];
 
   const renderCampos = (campos) => campos.map((campo) => {
-    // Verificar si el campo es de tipo booleano (alquileres_adeudados o gastos_adeudados)
+    // Si el campo es alquileres_adeudados o gastos_adeudados
     if (campo.name === 'alquileres_adeudados' || campo.name === 'gastos_adeudados') {
       return (
         <div className="col-md-6 mb-3" key={campo.name}>
@@ -97,13 +129,15 @@ const InquilinoForm = () => {
             className={`form-control ${errors[campo.name] ? 'is-invalid' : ''}`}
             {...register(campo.name, campo.required ? { required: `${campo.label} es obligatorio` } : {})}
           >
-            <option value="true">Sí debe</option>
-            <option value="false">No debe</option>
+            <option value="si debe">Sí debe</option>
+            <option value="no debe">No debe</option>
           </select>
           {errors[campo.name] && <span className="text-danger">{errors[campo.name].message}</span>}
         </div>
       );
     }
+  
+    // Para los demás campos, renderizamos un input como siempre
     return (
       <div className="col-md-6 mb-3" key={campo.name}>
         <label className="form-label" htmlFor={campo.name}>{campo.label}</label>
@@ -116,15 +150,14 @@ const InquilinoForm = () => {
         {errors[campo.name] && <span className="text-danger">{errors[campo.name].message}</span>}
       </div>
     );
-  });
+  });  
+
 
   return (
     <div className="container mt-4">
       <div className="p-3 mb-4 bg-agregar text-white rounded shadow">
         <h4 className="text-center mb-0">{id ? 'Editar Información del Inquilino' : 'Agregar Nuevo Inquilino'}</h4>
       </div>
-      {error && <div className="alert alert-danger">{error}</div>}
-      {message && <div className="alert alert-success">{message}</div>}
       <form className="p-4 border rounded bg-light custom-shadow" onSubmit={handleSubmit(onSubmit)}>
         <h5 className="mb-4 text-primary">Datos del Inquilino</h5>
         <div className="row">

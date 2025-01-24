@@ -5,6 +5,8 @@ import Modal from "react-modal";
 import { useForm } from "react-hook-form";
 import logo from "../assets/img/logo.png";
 import 'bootstrap/dist/css/bootstrap.min.css';
+import Swal from 'sweetalert2';
+import 'sweetalert2/dist/sweetalert2.min.css';
 
 
 Modal.setAppElement("#root");
@@ -32,18 +34,43 @@ const InquilinosList = () => {
   };
 
   const handleDeleteClick = async (id) => {
-    const confirmed = window.confirm("¿Estás seguro de que quieres eliminar este inquilino?");
-    if (confirmed) {
+    const result = await Swal.fire({
+      title: "¿Estás seguro?",
+      text: "No podrás revertir esto una vez eliminado.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar",
+    });
+  
+    if (result.isConfirmed) {
       try {
         const response = await fetch(`/api/inquilinos/${id}`, { method: "DELETE" });
         if (!response.ok) throw new Error("Error al eliminar el inquilino");
-        console.log("Inquilino eliminado exitosamente");
-        refetch();
+  
+        await Swal.fire({
+          title: "¡Eliminado!",
+          text: "El inquilino ha sido eliminado con éxito.",
+          icon: "success",
+          confirmButtonColor: "#3085d6",
+        });
+  
+        refetch(); // Actualiza los datos tras la eliminación
       } catch (error) {
+        Swal.fire({
+          title: "Error",
+          text: "Hubo un problema al intentar eliminar el inquilino.",
+          icon: "error",
+          confirmButtonColor: "#3085d6",
+        });
         console.error("Error al intentar eliminar el inquilino:", error);
       }
     }
   };
+  
+  
 
   const onSubmit = async (data) => {
     try {
@@ -77,9 +104,9 @@ const InquilinosList = () => {
 
   const handlePrint = async (inquilino) => {
     await preloadImage(logo); // Pre-cargar logo
-  
-      const printWindow = window.open("", "_blank", "height=900,width=1200");
-  
+
+    const printWindow = window.open("", "_blank", "height=900,width=1200");
+
 
     // Generar el contenido dinámico con las variables reales
     const content = `
@@ -307,11 +334,11 @@ const InquilinosList = () => {
 
     // Escribir el contenido y lanzar la impresión
     printWindow.document.write(content);
-   
-     // Espera 500ms para garantizar que todo se haya renderizado antes de imprimir
-  setTimeout(() => {
-    printWindow.print();   
-  }, 500);
+
+    // Espera 500ms para garantizar que todo se haya renderizado antes de imprimir
+    setTimeout(() => {
+      printWindow.print();
+    }, 500);
 
   };
 
@@ -394,6 +421,7 @@ const InquilinosList = () => {
                 >
                   <i className="bi bi-trash"></i>
                 </button>
+
                 <button
                   className="btn btn-sm"
                   style={{ backgroundColor: "#28a745", color: "#fff" }}
@@ -407,7 +435,7 @@ const InquilinosList = () => {
         </tbody>
       </table>
 
-   
+
       {/* Modal Ver y Editar */}
       <Modal
         isOpen={isViewModalOpen}

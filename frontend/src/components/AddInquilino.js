@@ -1,12 +1,34 @@
 import React from 'react';
 import { useForm } from 'react-hook-form';
+import Swal from 'sweetalert2';
+import 'sweetalert2/dist/sweetalert2.min.css';
+
+
 
 const AddInquilino = () => {
   const { register, handleSubmit } = useForm();
 
   const onSubmit = (data) => {
-    // Aquí puedes manejar la lógica para agregar un nuevo inquilino
-    console.log('Inquilino agregado:', data);
+    try {
+      // Aquí puedes manejar la lógica para agregar un nuevo inquilino
+      console.log('Inquilino agregado:', data);
+
+      // Mostrar alerta de éxito
+      Swal.fire({
+        title: '¡Inquilino Agregado!',
+        text: `El inquilino ${data.nombre} ${data.apellido} se ha agregado correctamente.`,
+        icon: 'success',
+        confirmButtonText: 'Aceptar',
+      });
+    } catch (error) {
+      // Mostrar alerta de error
+      Swal.fire({
+        title: 'Error',
+        text: 'Hubo un problema al agregar el inquilino. Inténtalo nuevamente.',
+        icon: 'error',
+        confirmButtonText: 'Aceptar',
+      });
+    }
   };
 
   return (
@@ -29,9 +51,7 @@ const AddInquilino = () => {
           <label>Teléfono:</label>
           <input {...register('telefono')} required />
         </div>
-        
 
-        {/* Otros campos que desees agregar */}
         <button type="submit">Agregar Inquilino</button>
       </form>
     </div>
@@ -39,6 +59,7 @@ const AddInquilino = () => {
 };
 
 export default AddInquilino;
+
 
 
 

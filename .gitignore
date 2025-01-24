@@ -1,2 +1,10 @@
-backup.sql
+ESTRUCTURA.md
+/node_modules
 node_modules/
+**/__tests__/
+__tests__/
+.hintrc
+package-lock.json
+package.json
+
+
