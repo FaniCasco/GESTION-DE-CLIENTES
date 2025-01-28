@@ -1,22 +1,21 @@
-import React, { useState } from "react";
-
-import { useInquilinos } from "../features/inquilinos/useInquilinos";
-import Modal from "react-modal";
-import { useForm } from "react-hook-form";
-import logo from "../assets/img/logo.png";
+import React, { useState } from 'react';
+import { useInquilinos } from '../features/inquilinos/useInquilinos';
+import Modal from 'react-modal';
+import { useForm } from 'react-hook-form';
+import logo from '../assets/img/logo.png';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
 
-
-Modal.setAppElement("#root");
+Modal.setAppElement('#root');
 
 const InquilinosList = () => {
   const { data: inquilinos, isLoading, isError, error, refetch } = useInquilinos();
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
   const [isViewModalOpen, setViewModalOpen] = useState(false);
   const [selectedInquilino, setSelectedInquilino] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { register, handleSubmit, reset } = useForm();
 
   const handleViewClick = (inquilino) => {
@@ -35,59 +34,62 @@ const InquilinosList = () => {
 
   const handleDeleteClick = async (id) => {
     const result = await Swal.fire({
-      title: "¿Estás seguro?",
-      text: "No podrás revertir esto una vez eliminado.",
-      icon: "warning",
+      title: '¿Estás seguro?',
+      text: 'No podrás revertir esto una vez eliminado.',
+      icon: 'warning',
       showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: "Sí, eliminar",
-      cancelButtonText: "Cancelar",
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar',
     });
-  
+
     if (result.isConfirmed) {
       try {
-        const response = await fetch(`/api/inquilinos/${id}`, { method: "DELETE" });
-        if (!response.ok) throw new Error("Error al eliminar el inquilino");
-  
+        const response = await fetch(`/api/inquilinos/${id}`, { method: 'DELETE' });
+        if (!response.ok) throw new Error('Error al eliminar el inquilino');
+
         await Swal.fire({
-          title: "¡Eliminado!",
-          text: "El inquilino ha sido eliminado con éxito.",
-          icon: "success",
-          confirmButtonColor: "#3085d6",
+          title: '¡Eliminado!',
+          text: 'El inquilino ha sido eliminado con éxito.',
+          icon: 'success',
+          confirmButtonColor: '#3085d6',
         });
-  
+
         refetch(); // Actualiza los datos tras la eliminación
       } catch (error) {
+        const errorMessage = error.response?.data?.message || 'Hubo un problema al intentar eliminar el inquilino.';
         Swal.fire({
-          title: "Error",
-          text: "Hubo un problema al intentar eliminar el inquilino.",
-          icon: "error",
-          confirmButtonColor: "#3085d6",
+          title: 'Error',
+          text: errorMessage,
+          icon: 'error',
+          confirmButtonColor: '#3085d6',
         });
-        console.error("Error al intentar eliminar el inquilino:", error);
+        console.error('Error al intentar eliminar el inquilino:', error);
       }
     }
   };
-  
-  
 
   const onSubmit = async (data) => {
+    setIsSubmitting(true);
     try {
       const updatedInquilino = { ...selectedInquilino, ...data };
-      console.log("Actualizando inquilino:", updatedInquilino);
+      console.log('Actualizando inquilino:', updatedInquilino);
 
       await fetch(`/api/inquilinos/${selectedInquilino.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedInquilino),
       });
 
       refetch();
       setIsEditing(false);
       setViewModalOpen(false);
+      reset(); // Resetea el formulario
     } catch (error) {
-      console.error("Error al actualizar los datos del inquilino", error);
+      console.error('Error al actualizar los datos del inquilino', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -105,8 +107,7 @@ const InquilinosList = () => {
   const handlePrint = async (inquilino) => {
     await preloadImage(logo); // Pre-cargar logo
 
-    const printWindow = window.open("", "_blank", "height=900,width=1200");
-
+    const printWindow = window.open('', '_blank', 'height=900,width=1200');
 
     // Generar el contenido dinámico con las variables reales
     const content = `
@@ -232,7 +233,7 @@ const InquilinosList = () => {
           <p><strong>Periodo:</strong> ${inquilino.periodo}</p>
           <p><strong>Contrato:</strong> ${inquilino.contrato}</p>
           <p><strong>Aumento:</strong> ${inquilino.aumento}</p>
-          <p><strong>Estado:</strong> ${inquilino.alquileres_adeudados > 0 ? `${inquilino.alquileres_adeudados} meses adeudados` : "Al día"}</p>
+          <p><strong>Estado:</strong> ${inquilino.alquileres_adeudados > 0 ? `${inquilino.alquileres_adeudados} meses adeudados` : 'Al día'}</p>
         </div>
         <div class="col-4">
           <h5 class="fw-bold">Detalles de Liquidación</h5>
@@ -301,7 +302,7 @@ const InquilinosList = () => {
           <p><strong>Periodo:</strong> ${inquilino.periodo}</p>
           <p><strong>Contrato:</strong> ${inquilino.contrato}</p>
           <p><strong>Aumento:</strong> ${inquilino.aumento}</p>
-          <p><strong>Estado:</strong> ${inquilino.alquileres_adeudados > 0 ? `${inquilino.alquileres_adeudados} meses adeudados` : "Al día"}</p>
+          <p><strong>Estado:</strong> ${inquilino.alquileres_adeudados > 0 ? `${inquilino.alquileres_adeudados} meses adeudados` : 'Al día'}</p>
         </div>
         <div class="col-4">
           <h5 class="fw-bold">Detalles de Liquidación</h5>
@@ -328,8 +329,6 @@ const InquilinosList = () => {
   </div>
 </body>
 </html>
-
-
     `;
 
     // Escribir el contenido y lanzar la impresión
@@ -339,10 +338,7 @@ const InquilinosList = () => {
     setTimeout(() => {
       printWindow.print();
     }, 500);
-
   };
-
-
 
   if (isLoading) return <p>Cargando inquilinos...</p>;
 
@@ -360,9 +356,16 @@ const InquilinosList = () => {
         inquilino.alquileres_adeudados?.toString().includes(searchLower) ||
         inquilino.gastos_adeudados?.toString().includes(searchLower)
       );
-
     })
     .sort((a, b) => a.nombre.localeCompare(b.nombre));
+
+  // Función para formatear el nombre de los campos
+  const formatFieldName = (fieldName) => {
+    return fieldName
+      .split('_') // Divide el nombre del campo por el guion bajo
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1)) // Capitaliza la primera letra de cada palabra
+      .join(' '); // Vuelve a unir las palabras con un espacio
+  };
 
   return (
     <div className="container mt-4">
@@ -402,21 +405,21 @@ const InquilinosList = () => {
               <td>
                 <button
                   className="btn btn-sm me-2"
-                  style={{ backgroundColor: "#17a2b8", color: "#fff" }}
+                  style={{ backgroundColor: '#17a2b8', color: '#fff' }}
                   onClick={() => handleViewClick(inquilino)}
                 >
                   <i className="bi bi-eye"></i>
                 </button>
                 <button
                   className="btn btn-sm me-2"
-                  style={{ backgroundColor: "#007bff", color: "#fff" }}
+                  style={{ backgroundColor: '#007bff', color: '#fff' }}
                   onClick={() => handleEditClick(inquilino)}
                 >
                   <i className="bi bi-pencil"></i>
                 </button>
                 <button
                   className="btn btn-sm me-2"
-                  style={{ backgroundColor: "#dc3545", color: "#fff" }}
+                  style={{ backgroundColor: '#dc3545', color: '#fff' }}
                   onClick={() => handleDeleteClick(inquilino.id)}
                 >
                   <i className="bi bi-trash"></i>
@@ -424,7 +427,7 @@ const InquilinosList = () => {
 
                 <button
                   className="btn btn-sm"
-                  style={{ backgroundColor: "#28a745", color: "#fff" }}
+                  style={{ backgroundColor: '#28a745', color: '#fff' }}
                   onClick={() => handlePrint(inquilino)} // Botón de imprimir
                 >
                   <i className="bi bi-printer"></i>
@@ -435,7 +438,6 @@ const InquilinosList = () => {
         </tbody>
       </table>
 
-
       {/* Modal Ver y Editar */}
       <Modal
         isOpen={isViewModalOpen}
@@ -443,98 +445,136 @@ const InquilinosList = () => {
         contentLabel="Ver/Editar Inquilino"
         style={{
           content: {
-            maxWidth: "800px", // Ancho máximo del modal
-            margin: "auto",
-            height: "85vh", // Altura del modal
-            maxHeight: "85vh", // Limita la altura máxima
-            overflowY: "auto", // Permite el scroll solo si es necesario
-            background: "#2c2c2c", // Fondo oscuro
-            color: "#ffffff", // Texto claro
-            borderRadius: "15px", // Bordes más redondeados
-            border: "none", // Sin borde
-            boxShadow: "0px 8px 20px rgba(0, 0, 0, 0.6)", // Sombra pronunciada
-            padding: "20px", // Espaciado interno
-            animation: "fadeIn 0.3s ease-in-out", // Animación de entrada
+            maxWidth: '800px', // Ancho máximo del modal
+            margin: 'auto',
+            height: '85vh', // Altura del modal
+            maxHeight: '85vh', // Limita la altura máxima
+            overflowY: 'auto', // Permite el scroll solo si es necesario
+            background: '#2c2c2c', // Fondo oscuro
+            color: '#ffffff', // Texto claro
+            borderRadius: '15px', // Bordes más redondeados
+            border: 'none', // Sin borde
+            boxShadow: '0px 8px 20px rgba(0, 0, 0, 0.6)', // Sombra pronunciada
+            padding: '20px', // Espaciado interno
+            animation: 'fadeIn 0.3s ease-in-out', // Animación de entrada
           },
           overlay: {
-            backgroundColor: "rgba(0, 0, 0, 0.8)", // Fondo translúcido para el overlay
+            backgroundColor: 'rgba(0, 0, 0, 0.8)', // Fondo translúcido para el overlay
           },
         }}
       >
-        <h3 style={{ borderBottom: "2px solid #555", paddingBottom: "10px" }}>
-          {isEditing ? "Editar Información del Inquilino" : "Información del Inquilino"}
+        <h3 style={{ borderBottom: '2px solid #555', paddingBottom: '10px' }}>
+          {isEditing ? 'Editar Información del Inquilino' : 'Información del Inquilino'}
         </h3>
         {selectedInquilino && (
           <form onSubmit={handleSubmit(onSubmit)}>
             <div
               style={{
-                display: "grid",
-
-                gridTemplateColumns: "1fr 1fr", // Dos columnas
-                gap: "15px", // Espaciado entre columnas
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr', // Dos columnas
+                gap: '15px', // Espaciado entre columnas
               }}
             >
-              {Object.keys(selectedInquilino).map((key) => (
-                <div key={key}>
-                  <label
-                    style={{
-                      FontFamily: "'Poppins', sans-serif;",
-                      FontWeight: "300",
-                      display: "block",
-                      fontSize: "15px",
-                      marginBottom: "5px",
-                    }}
-                  >
-                    {key}
-                  </label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    {...register(key)}
-                    defaultValue={selectedInquilino[key]}
-                    readOnly={!isEditing} // Deshabilita edición si no está en modo "Editar"
-                    style={{
-                      background: isEditing ? "#f5f5dc" : "#2c2c2c",
-                      color: isEditing ? "black" : "white",
-                      border: "1px solid #555", // Borde sutil
-                      borderRadius: "5px", // Bordes suaves
-                      fontSize: "15px", // Texto más pequeño
-                      FontFamily: "'Poppins', sans-serif;",
-                      FontWeight: "300",
-                      padding: "8px", // Espaciado interno reducido
-                    }}
-                  />
-                </div>
-              ))}
+              {Object.keys(selectedInquilino).map((key) => {
+                // Evitar que importe_total se muestre en el medio de otros campos
+                if (key === 'importe_total') return null; // No renderiza importe_total aquí
+                return (
+                  <div key={key}>
+                    <label
+                      style={{
+                        fontFamily: "'Poppins', sans-serif",
+                        fontWeight: '300',
+                        display: 'block',
+                        fontSize: '15px',
+                        marginBottom: '5px',
+                      }}
+                    >
+                      {formatFieldName(key)} {/* Aquí se aplica la función de formateo */}
+                    </label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      {...register(key)}
+                      defaultValue={selectedInquilino[key]}
+                      readOnly={!isEditing}
+                      style={{
+                        background: isEditing ? '#f5f5dc' : '#2c2c2c',
+                        color: isEditing ? 'black' : 'white',
+                        border: '1px solid #555',
+                        borderRadius: '5px',
+                        fontSize: '15px',
+                        fontFamily: "'Poppins', sans-serif",
+                        fontWeight: '300',
+                        padding: '8px',
+                      }}
+                    />
+                  </div>
+                );
+              })}
+
+              {/* Este div lo agregué para poner el campo 'importe_total' junto a otro campo en la segunda columna */}
+              <div>
+                <label
+                  style={{
+                    fontFamily: "'Poppins', sans-serif",
+                    fontWeight: '300',
+                    display: 'block',
+                    fontSize: '15px',
+                    marginBottom: '5px',
+                  }}
+                >
+                  {formatFieldName('importe_total')} {/* Aquí se aplica la función de formateo */}
+                </label>
+                <input
+                  type="text"
+                  className="form-control"
+                  {...register('importe_total')}
+                  defaultValue={selectedInquilino?.importe_total}
+                  readOnly={!isEditing}
+                  style={{
+                    background: isEditing ? '#f5f5dc' : '#2c2c2c',
+                    color: isEditing ? 'black' : 'white',
+                    border: '1px solid #555',
+                    borderRadius: '5px',
+                    fontSize: '15px',
+                    fontFamily: "'Poppins', sans-serif",
+                    fontWeight: '300',
+                    padding: '8px',
+                  }}
+                />
+              </div>
+
             </div>
+
             <div className="d-flex justify-content-between mt-4">
               {isEditing ? (
                 <>
                   <button
                     type="submit"
                     className="btn btn-success"
+                    disabled={isSubmitting}
                     style={{
-                      backgroundColor: "#28a745",
-                      borderColor: "#28a745",
-                      color: "#fff",
-                      fontSize: "15px", // Texto más pequeño
-                      fontWeight: "bold",
-                      padding: "8px 16px",
+                      backgroundColor: '#28a745',
+                      borderColor: '#28a745',
+                      color: '#fff',
+                      fontSize: '15px',
+                      fontWeight: 'bold',
+                      padding: '8px 16px',
                     }}
                   >
-                    Guardar
+                    {isSubmitting ? 'Guardando...' : 'Guardar'}
                   </button>
                   <button
                     type="button"
                     className="btn btn-secondary"
                     onClick={() => setIsEditing(false)}
                     style={{
-                      backgroundColor: "#6c757d",
-                      borderColor: "#6c757d",
-                      color: "#fff",
-                      fontSize: "15px", // Texto más pequeño
-                      fontWeight: "bold",
-                      padding: "8px 16px",
+                      backgroundColor: '#6c757d',
+                      borderColor: '#6c757d',
+                      color: '#fff',
+                      fontSize: '15px',
+                      fontWeight: 'bold',
+                      padding: '8px 16px',
                     }}
                   >
                     Cancelar
@@ -546,12 +586,12 @@ const InquilinosList = () => {
                   className="btn btn-primary"
                   onClick={() => setIsEditing(true)}
                   style={{
-                    backgroundColor: "#007bff",
-                    borderColor: "#007bff",
-                    color: "#fff",
-                    fontSize: "15px",
-                    fontWeight: "bold",
-                    padding: "8px 16px",
+                    backgroundColor: '#007bff',
+                    borderColor: '#007bff',
+                    color: '#fff',
+                    fontSize: '15px',
+                    fontWeight: 'bold',
+                    padding: '8px 16px',
                   }}
                 >
                   Editar
@@ -562,12 +602,10 @@ const InquilinosList = () => {
                 className="btn btn-danger"
                 onClick={() => setViewModalOpen(false)}
                 style={{
-                  backgroundColor: "#dc3545",
-                  borderColor: "#dc3545",
-                  color: "#fff",
-                  fontWeight: "bold",
-                  fontSize: "15px", // Texto más pequeño
-                  padding: "8px 16px",
+                  backgroundColor: '#dc3545',
+                  borderColor: '#dc3545',
+                  color: '#fff',
+                  fontWeight: 'bold',
                 }}
               >
                 Cerrar
@@ -576,9 +614,7 @@ const InquilinosList = () => {
           </form>
         )}
       </Modal>
-
-
-    </div >
+    </div>
   );
 };
 

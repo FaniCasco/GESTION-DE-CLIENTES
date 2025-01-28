@@ -61,11 +61,11 @@ const addInquilino = async (req, res) => {
     propietario_localidad,
     alquileres_adeudados,
     gastos_adeudados,
-    importe_total,
     alquileres_importe,
     agua_importe,
     tasa_importe,
     otros,
+    importe_total,
   } = req.body;
 
   // Convertir números
@@ -96,11 +96,11 @@ const addInquilino = async (req, res) => {
     !propietario_nombre ||
     !propietario_direccion ||
     !propietario_localidad ||
-    isNaN(importe_total_num) ||
     isNaN(alquileres_importe_num) ||
     isNaN(agua_importe_num) ||
     isNaN(tasa_importe_num) ||
-    isNaN(otros_num)
+    isNaN(otros_num) ||
+    isNaN(importe_total_num)
   ) {
     return res.status(400).json({
       message:
@@ -115,7 +115,7 @@ const addInquilino = async (req, res) => {
         nombre, apellido, telefono, inicio_contrato, periodo,
         contrato, aumento, propietario_nombre, propietario_direccion,
         propietario_localidad, alquileres_adeudados, gastos_adeudados,
-        importe_total, alquileres_importe, agua_importe, tasa_importe, otros
+        alquileres_importe, agua_importe, tasa_importe, otros, importe_total
       )
       VALUES (
         $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
@@ -137,11 +137,11 @@ const addInquilino = async (req, res) => {
       propietario_localidad,
       alquileres_adeudados,
       gastos_adeudados,
-      importe_total_num,
       alquileres_importe_num,
       agua_importe_num,
       tasa_importe_num,
       otros_num,
+      importe_total_num,
     ];
 
     // Ejecutar consulta
@@ -177,11 +177,11 @@ const updateInquilino = async (req, res) => {
     propietario_localidad,
     alquileres_adeudados,
     gastos_adeudados,
-    importe_total,
     alquileres_importe,
     agua_importe,
     tasa_importe,
-    otros
+    otros,
+    importe_total
   } = req.body;
 
   try {
@@ -190,15 +190,15 @@ const updateInquilino = async (req, res) => {
        SET nombre = $1, apellido = $2, telefono = $3, inicio_contrato = $4, periodo = $5,
            contrato = $6, aumento = $7, propietario_nombre = $8, propietario_direccion = $9, 
            propietario_localidad = $10, alquileres_adeudados = $11, gastos_adeudados = $12, 
-           importe_total = $13, alquileres_importe = $14, agua_importe = $15, 
-           tasa_importe = $16, otros = $17 
+           alquileres_importe = $13, agua_importe = $14, tasa_importe = $15, otros = $16, 
+           importe_total = $17 
        WHERE id = $18 
        RETURNING *`,
       [
         nombre, apellido, telefono, inicio_contrato, periodo, contrato, aumento,
         propietario_nombre, propietario_direccion, propietario_localidad,
-        alquileres_adeudados, gastos_adeudados, importe_total, alquileres_importe,
-        agua_importe, tasa_importe, otros, id,
+        alquileres_adeudados, gastos_adeudados, alquileres_importe,
+        agua_importe, tasa_importe, otros, importe_total, id,
       ]
     );
 

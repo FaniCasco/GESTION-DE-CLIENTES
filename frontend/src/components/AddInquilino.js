@@ -1,17 +1,25 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
 
-
-
 const AddInquilino = () => {
-  const { register, handleSubmit } = useForm();
+  const { register, handleSubmit, reset, formState: { errors } } = useForm();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const onSubmit = (data) => {
+  const onSubmit = async (data) => {
+    setIsSubmitting(true);
     try {
-      // Aquí puedes manejar la lógica para agregar un nuevo inquilino
-      console.log('Inquilino agregado:', data);
+      // Simulación de una solicitud HTTP (reemplaza con tu lógica real)
+      const response = await fetch('/api/inquilinos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al agregar el inquilino');
+      }
 
       // Mostrar alerta de éxito
       Swal.fire({
@@ -20,14 +28,17 @@ const AddInquilino = () => {
         icon: 'success',
         confirmButtonText: 'Aceptar',
       });
+      reset(); // Resetea el formulario
     } catch (error) {
       // Mostrar alerta de error
       Swal.fire({
         title: 'Error',
-        text: 'Hubo un problema al agregar el inquilino. Inténtalo nuevamente.',
+        text: error.message || 'Hubo un problema al agregar el inquilino. Inténtalo nuevamente.',
         icon: 'error',
         confirmButtonText: 'Aceptar',
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -37,29 +48,56 @@ const AddInquilino = () => {
       <form onSubmit={handleSubmit(onSubmit)}>
         <div>
           <label>Nombre:</label>
-          <input {...register('nombre')} required />
+          <input
+            {...register('nombre', { required: 'El nombre es obligatorio', minLength: { value: 2, message: 'El nombre debe tener al menos 2 caracteres' } })}
+            aria-label="Nombre"
+            aria-describedby={errors.nombre ? 'nombre-error' : undefined}
+          />
+          {errors.nombre && <span id="nombre-error" className="error">{errors.nombre.message}</span>}
         </div>
         <div>
           <label>Apellido:</label>
-          <input {...register('apellido')} required />
+          <input
+            {...register('apellido', { required: 'El apellido es obligatorio' })}
+            aria-label="Apellido"
+            aria-describedby={errors.apellido ? 'apellido-error' : undefined}
+          />
+          {errors.apellido && <span id="apellido-error" className="error">{errors.apellido.message}</span>}
         </div>
         <div>
           <label>Dirección:</label>
-          <input {...register('direccion')} required />
+          <input
+            {...register('direccion', { required: 'La dirección es obligatoria' })}
+            aria-label="Dirección"
+            aria-describedby={errors.direccion ? 'direccion-error' : undefined}
+          />
+          {errors.direccion && <span id="direccion-error" className="error">{errors.direccion.message}</span>}
         </div>
         <div>
           <label>Teléfono:</label>
-          <input {...register('telefono')} required />
+          <input
+            {...register('telefono', {
+              required: 'El teléfono es obligatorio',
+              pattern: {
+                value: /^[0-9]+$/,
+                message: 'El teléfono solo debe contener números',
+              },
+            })}
+            aria-label="Teléfono"
+            aria-describedby={errors.telefono ? 'telefono-error' : undefined}
+          />
+          {errors.telefono && <span id="telefono-error" className="error">{errors.telefono.message}</span>}
         </div>
 
-        <button type="submit">Agregar Inquilino</button>
+        <button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Agregando...' : 'Agregar Inquilino'}
+        </button>
       </form>
     </div>
   );
 };
 
 export default AddInquilino;
-
 
 
 
