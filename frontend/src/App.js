@@ -1,5 +1,4 @@
-//CLIENTES/frontend/src/App.js
-
+// App.js
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
@@ -31,7 +30,10 @@ function App() {
   return (
     <Router>
       <div className="d-flex flex-column min-vh-100">
-        <Navbar isAuthenticated={isAuthenticated} setIsAuthenticated={setIsAuthenticated} />
+        <Navbar 
+          isAuthenticated={isAuthenticated} 
+          setIsAuthenticated={setIsAuthenticated} 
+        />
         <div className="container mt-4 flex-grow-1">
           <Routes>
             <Route
@@ -60,7 +62,6 @@ function App() {
 }
 
 export default App;
-
 
 
 

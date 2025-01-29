@@ -30,6 +30,7 @@ label, input {
     border-color: #007bff;
 }
 
+
 .login-container {
     min-height: calc(100vh - 120px); /* Altura dinámica que excluye el Navbar y el Footer */
     display: flex;

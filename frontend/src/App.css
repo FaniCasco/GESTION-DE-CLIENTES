@@ -4,10 +4,6 @@
   
 }
 
-.bg-lista {
-  background-color: #003366;
-  color: #f8f9fa;
-}
 .custom-shadow {
   border: 1px solid #ccc; /* Borde más claro */
   box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.3); /* Sombra más oscura */
@@ -37,15 +33,70 @@
   text-align: center; /* Centra el contenido */
 }
 
-
 .bg-nav {
-  background-color: #003366;
+  background-color: #003366!important;
   
 }
 .bg-agregar {
   background-color: #003366; /* Cambiar por el color deseado */
   color: #fff;
 }
+
+/* Sombra sutil para los botones */
+.btn.shadow-sm {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.08)!important;
+  transition: box-shadow 0.2s ease-in-out!important;
+}
+
+/* Efecto al pasar el mouse (hover) para simular el efecto 3D */
+.btn:hover.shadow-sm {
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2), 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+
+.btn-metal {
+  background: linear-gradient(182deg, #6ac5fd, #000408); /* Azul oscuro con sombra metálica */
+  color: #FFFFFF; /* Texto blanco para contraste */
+  border: none;
+  border-radius: 50px; /* Botón redondeado */
+  padding: 12px 24px;
+  font-size: 16px;
+  font-family: 'Poppins', sans-serif;
+  letter-spacing: 1px;
+  box-shadow: 
+    inset -2px -2px 5px rgba(255, 255, 255, 0.1), /* Brillo interno superior */
+    inset 2px 2px 5px rgba(0, 0, 0, 0.3), /* Sombra interna inferior */
+    4px 4px 8px rgba(0, 0, 0, 0.5), /* Sombra externa */
+    -4px -4px 8px rgba(255, 255, 255, 0.1); /* Resaltado externo superior */
+  transition: all 0.3s ease-in-out;
+  cursor: pointer;
+}
+
+.btn-metal:hover {
+  background: linear-gradient(145deg, #000408, #6ac5fd); /* Azul metálico más vibrante */
+  box-shadow: 
+    inset -3px -3px 6px rgba(255, 255, 255, 0.3), /* Más brillo interno */
+    inset 3px 3px 6px rgba(0, 0, 0, 0.4), /* Sombra interna más fuerte */
+    5px 5px 12px rgba(0, 0, 0, 0.6), /* Sombra externa más profunda */
+    -5px -5px 12px rgba(255, 255, 255, 0.2); /* Resaltado externo más notorio */
+  transform: translateY(-2px); /* Efecto de levantamiento */
+}
+
+.btn-metal:active {
+  background: linear-gradient(145deg, #001a33, #003366); /* Degradado invertido */
+  box-shadow: 
+    inset 4px 4px 8px rgba(0, 0, 0, 0.4), /* Sombra interna más pronunciada */
+    inset -2px -2px 5px rgba(255, 255, 255, 0.2), /* Reducir brillo interno */
+    2px 2px 4px rgba(0, 0, 0, 0.4); /* Sombra externa suave */
+  transform: translateY(2px); /* Botón hundido */
+}
+.btn-bold {
+  font-weight: bold;
+  color: white;
+}
+
+
+
+
 
 footer {
   background-color: #003366;

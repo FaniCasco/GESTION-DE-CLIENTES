@@ -1,14 +1,15 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api/api';
 import { useForm } from 'react-hook-form';
-import Swal from 'sweetalert2'; // Importar SweetAlert2
+import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
 
 const InquilinoForm = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { register, handleSubmit, setValue, reset, formState: { errors } } = useForm();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchInquilino = async () => {
@@ -34,18 +35,19 @@ const InquilinoForm = () => {
   }, [id, setValue, reset]);
 
   const onSubmit = async (data) => {
+    setIsSubmitting(true);
     const formattedData = {
       ...data,
       inicio_contrato: data.inicio_contrato ? new Date(data.inicio_contrato).toISOString().split('T')[0] : null,
-      importe_total: parseFloat(data.importe_total) || 0,
       alquileres_importe: parseFloat(data.alquileres_importe) || 0,
       agua_importe: parseFloat(data.agua_importe) || 0,
       tasa_importe: parseFloat(data.tasa_importe) || 0,
       otros: parseFloat(data.otros) || 0,
       alquileres_adeudados: data.alquileres_adeudados === 'true' ? 'si debe' : 'no debe',
       gastos_adeudados: data.gastos_adeudados === 'true' ? 'si debe' : 'no debe',
+      importe_total: parseFloat(data.importe_total) || 0,
     };
-  
+
     try {
       if (id) {
         await api.put(`/inquilinos/${id}`, formattedData);
@@ -63,19 +65,22 @@ const InquilinoForm = () => {
           icon: 'success',
           confirmButtonText: 'Aceptar',
         });
+        reset();
       }
       navigate('/inquilinos');
     } catch (err) {
       console.error('Error al guardar los datos:', err);
+      const errorMessage = err.response?.data?.message || 'Hubo un problema al guardar los datos del inquilino. Inténtalo nuevamente.';
       Swal.fire({
         title: 'Error',
-        text: 'Hubo un problema al guardar los datos del inquilino. Inténtalo nuevamente.',
+        text: errorMessage,
         icon: 'error',
         confirmButtonText: 'Aceptar',
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
-  
 
   const handleCancel = () => {
     Swal.fire({
@@ -95,7 +100,7 @@ const InquilinoForm = () => {
   const camposInquilino = [
     { label: 'Nombre', name: 'nombre', required: true },
     { label: 'Apellido', name: 'apellido', required: true },
-    { label: 'Teléfono', name: 'telefono', required: true, pattern: /^[0-9]{10}$/ },
+    { label: 'Teléfono', name: 'telefono', required: true, pattern: /^[0-9]{10}$/, message: 'El teléfono debe tener 10 dígitos' },
     { label: 'Periodo', name: 'periodo', required: true },
     { label: 'Contrato', name: 'contrato', required: true },
     { label: 'Inicio del Contrato', name: 'inicio_contrato', required: true, type: 'date' },
@@ -115,11 +120,10 @@ const InquilinoForm = () => {
     { label: 'Agua', name: 'agua_importe' },
     { label: 'Tasa', name: 'tasa_importe' },
     { label: 'Otros', name: 'otros' },
-    { label: 'Importe Total', name: 'importe_total' },
+    { label: 'Importe Total', name: 'importe_total' }, 
   ];
 
   const renderCampos = (campos) => campos.map((campo) => {
-    // Si el campo es alquileres_adeudados o gastos_adeudados
     if (campo.name === 'alquileres_adeudados' || campo.name === 'gastos_adeudados') {
       return (
         <div className="col-md-6 mb-3" key={campo.name}>
@@ -136,8 +140,7 @@ const InquilinoForm = () => {
         </div>
       );
     }
-  
-    // Para los demás campos, renderizamos un input como siempre
+
     return (
       <div className="col-md-6 mb-3" key={campo.name}>
         <label className="form-label" htmlFor={campo.name}>{campo.label}</label>
@@ -145,13 +148,17 @@ const InquilinoForm = () => {
           id={campo.name}
           type={campo.type || 'text'}
           className={`form-control ${errors[campo.name] ? 'is-invalid' : ''}`}
-          {...register(campo.name, campo.required ? { required: `${campo.label} es obligatorio`, pattern: campo.pattern && { value: campo.pattern, message: 'Formato inválido' } } : {})}
+          aria-label={campo.label}
+          aria-describedby={errors[campo.name] ? `${campo.name}-error` : undefined}
+          {...register(campo.name, {
+            required: campo.required ? `${campo.label} es obligatorio` : false,
+            pattern: campo.pattern ? { value: campo.pattern, message: campo.message } : undefined,
+          })}
         />
-        {errors[campo.name] && <span className="text-danger">{errors[campo.name].message}</span>}
+        {errors[campo.name] && <span id={`${campo.name}-error`} className="text-danger">{errors[campo.name].message}</span>}
       </div>
     );
-  });  
-
+  });
 
   return (
     <div className="container mt-4">
@@ -175,7 +182,14 @@ const InquilinoForm = () => {
         </div>
 
         <div className="d-flex justify-content-end">
-          <button type="submit" className="btn btn-primary me-2">{id ? 'Actualizar' : 'Guardar'}</button>
+          <button type="submit" className="btn btn-primary me-2" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                {id ? ' Actualizando...' : ' Guardando...'}
+              </>
+            ) : (id ? 'Actualizar' : 'Guardar')}
+          </button>
           <button type="button" className="btn btn-secondary" onClick={handleCancel}>Cancelar</button>
         </div>
       </form>
@@ -184,7 +198,6 @@ const InquilinoForm = () => {
 };
 
 export default InquilinoForm;
-
 
 
 
