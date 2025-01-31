@@ -1,92 +1,62 @@
-# Instructivo para Restaurar la Base de Datos
+# INTRUCTIVO PARA EL FUNCIONAMIENTO DE LA APP
 
-Este instructivo explica cómo restaurar la base de datos PostgreSQL a partir de los archivos de respaldo (`.sql` o `.backup`) en un entorno de desarrollo.
+1. **Instalación de Postgres:**
 
-## Prerrequisitos
+ Puedes descargarlo desde [postgresql.org](https://www.postgresql.org/download/). Asegúrate de instalar la versión 13 o superior.
 
-1. **PostgreSQL Instalado**: Asegúrate de tener PostgreSQL instalado en tu máquina. Puedes descargarlo desde [postgresql.org](https://www.postgresql.org/download/).
-2. **Acceso al Archivo de Respaldo**: Verifica que tengas el archivo de respaldo disponible. Este archivo se encuentra en la carpeta del proyecto:
+ ***Configuración de la base de datos:***
 
----
+ Ejecuta el siguiente comando en la terminal para crear una base de datos y un usuario con permisos de administrador:
 
-   CLIENTES/server/backup.sql
+```bash
+  createdb -U postgres inquilinos
+```
 
----
+  ***Configuración del archivo `.env`:***
 
-   o si usas el formato binario:
+ Crea un archivo `.env` en la raíz del proyecto y agrega las siguientes variables de entorno:
 
----
+```
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=ParaguayS3660
+DB_NAME=clientes
+PORT=3001
+```
 
-   CLIENTES/server/backup.backup
+2. **Instalación de Node.js:**
 
----
+Puedes descargarlo desde [nodejs.org](https://nodejs.org/).
+version 10.9.0
+3. **Instalación de las dependencias:**
 
-3. **Credenciales de PostgreSQL**: Necesitas un usuario con privilegios para restaurar la base de datos.
+ Ejecuta el siguiente comando en la terminal para instalar las dependencias necesarias:
 
----
+```bash
+npm install
+```
 
-## Restaurar desde un Archivo `.sql`
+4. **Asegurar las variables de entorno: path**
 
-1. **Abrir Terminal o Consola**: Navega a la carpeta donde se encuentra el archivo `backup.sql`:
+Revisar las variables de entorno de windows para ver que el path de node este agregado
+**Agregarlo al path de windows bin asi**:
+Buscar en C:\Program Files\nodejs\node_modules\npm\bin
 
-   ```bash
-   cd CLIENTES/server
-   ```
+* Copiar el path de la carpeta node_modules\npm\bin
+* Ir a variables de entorno de windows y agregarlo a path
 
-2. **Ejecutar el Comando de Restauración**:
+**Hacer lo mismo con Postgres**
 
-   ```bash
-   psql -U <tu_usuario> -d <nombre_de_tu_base_de_datos> -f backup.sql
-   ```
+Buscar en C:\Program Files\PostgreSQL\13\bin
 
-   - Reemplaza `<tu_usuario>` por el usuario de PostgreSQL.
-   - Reemplaza `<nombre_de_tu_base_de_datos>` por el nombre de la base de datos que deseas restaurar.
+* Copiar el path de la carpeta bin
+* Ir a variables de entorno de windows y agregarlo a path
 
-3. **Confirmación**: Si todo se ejecuta correctamente, la base de datos será restaurada.
 
----
 
-## Restaurar desde un Archivo `.backup`
 
-1. **Abrir Terminal o Consola**: Navega a la carpeta donde se encuentra el archivo `backup.backup`:
 
-   ```bash
-   cd CLIENTES/server
-   ```
 
-2. **Ejecutar el Comando de Restauración**:
 
-   ```bash
-   pg_restore -U <tu_usuario> -d <nombre_de_tu_base_de_datos> --clean --create backup.backup
-   ```
 
-   - Reemplaza `<tu_usuario>` por el usuario de PostgreSQL.
-   - Reemplaza `<nombre_de_tu_base_de_datos>` por el nombre de la base de datos que deseas restaurar. Si usas `--create`, el nombre se define dentro del respaldo.
-
-3. **Confirmación**: Si todo se ejecuta correctamente, verás los logs de restauración en la terminal.
-
----
-
-## Notas Adicionales
-
-- Si la base de datos no existe y no estás usando `--create`, créala manualmente antes de la restauración:
-
-  ```bash
-  createdb -U <tu_usuario> <nombre_de_tu_base_de_datos>
-  ```
-
-- Asegúrate de que el usuario tenga los privilegios necesarios para crear y modificar bases de datos.
-
----
-
-## Solución de Problemas
-
-- **Error de conexión**: Asegúrate de que el servidor PostgreSQL esté en ejecución.
-- **Permisos insuficientes**: Verifica que el usuario tiene privilegios suficientes para restaurar.
-- **Archivo no encontrado**: Confirma que estás en el directorio correcto.
-
----
-
-¡Tu base de datos debería estar lista para usarse después de completar estos pasos! Si tienes alguna duda o necesitas ayuda adicional, no dudes en consultarlo.
-
----

@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/api';
+import '../Login.css';
 
 const Login = ({ setIsAuthenticated }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setError('');
+    setError(null);
     if (!username || !password) {
       setError('Por favor, complete todos los campos.');
       return;
@@ -19,17 +20,19 @@ const Login = ({ setIsAuthenticated }) => {
     setLoading(true);
     try {
       const response = await api.post('/auth/login', { username, password });
-      localStorage.setItem('token', response.data.token);
-      setIsAuthenticated(true);
-      navigate('/');
+      if (response?.data?.token) {
+        localStorage.setItem('token', response.data.token);
+        setIsAuthenticated(true);
+        navigate('/');
+      } else {
+        setError('Hubo un error inesperado. Inténtelo más tarde.');
+      }
     } catch (err) {
-      if (err.response) {
-        if (err.response.status === 401) {
-          setError('Credenciales incorrectas. Verifique su nombre de usuario y contraseña.');
-        } else {
-          setError('Hubo un error inesperado. Inténtelo más tarde.');
-        }
-      } else if (err.request) {
+      if (err?.response?.status === 401) {
+        setError('Credenciales incorrectas. Verifique su nombre de usuario y contraseña.');
+      } else if (err?.response?.data?.message) {
+        setError(err.response.data.message);
+      } else if (err?.request) {
         setError('No se recibió respuesta del servidor. Verifique su conexión a internet.');
       } else {
         setError('Hubo un error inesperado. Inténtelo más tarde.');
@@ -91,3 +94,4 @@ const Login = ({ setIsAuthenticated }) => {
 };
 
 export default Login;
+

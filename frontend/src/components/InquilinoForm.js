@@ -16,7 +16,18 @@ const InquilinoForm = () => {
       if (id) {
         try {
           const response = await api.get(`/inquilinos/${id}`);
-          Object.keys(response.data).forEach((key) => setValue(key, response.data[key]));
+          if (response.data) {
+            Object.keys(response.data).forEach((key) => setValue(key, response.data[key]));
+          } else {
+            console.error('Error al cargar el inquilino:', 'No se encontraron datos');
+            Swal.fire({
+              title: 'Error',
+              text: 'No se pudieron cargar los datos del inquilino.',
+              icon: 'error',
+              confirmButtonText: 'Aceptar',
+            });
+          }
+         
         } catch (err) {
           console.error('Error al cargar el inquilino:', err);
           Swal.fire({
@@ -151,7 +162,8 @@ const InquilinoForm = () => {
           aria-label={campo.label}
           aria-describedby={errors[campo.name] ? `${campo.name}-error` : undefined}
           {...register(campo.name, {
-            required: campo.required ? `${campo.label} es obligatorio` : false,
+            required: campo.required ? { message: `${campo.label} es obligatorio` } : false,
+            
             pattern: campo.pattern ? { value: campo.pattern, message: campo.message } : undefined,
           })}
         />

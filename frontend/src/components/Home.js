@@ -31,7 +31,13 @@ const Home = () => {
 
         setLoading(false);
       } catch (error) {
-        console.error('Error al validar el token:', error);
+        if (error instanceof Error) {
+          console.error('Error al validar el token:', error);
+        } else {
+          console.error('Error al validar el token:', error);
+        }
+
+       
         Swal.fire({
           title: 'Sesión Expirada',
           text: 'Tu sesión ha expirado. Por favor, inicia sesión nuevamente.',
@@ -44,7 +50,10 @@ const Home = () => {
       }
     };
 
-    validateToken();
+    validateToken().catch((error) => {
+      console.error('Error al ejecutar la función validateToken:', error);
+    });
+   
   }, [navigate]);
 
   if (loading) {

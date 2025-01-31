@@ -619,31 +619,3 @@ const InquilinosList = () => {
 };
 
 export default InquilinosList;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

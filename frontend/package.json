@@ -11,7 +11,10 @@
     "bootstrap": "^5.3.3",
     "bootstrap-icons": "^1.11.3",
     "browserify-zlib": "^0.2.0",
+    "buffer": "^6.0.3",
     "cra-template": "1.2.0",
+    "https-browserify": "^1.0.0",
+    "os-browserify": "^0.3.0",
     "path-browserify": "^1.0.1",
     "react": "^18.0.0",
     "react-bootstrap": "^2.10.7",
@@ -23,6 +26,7 @@
     "react-to-print": "^3.0.4",
     "redux": "^5.0.1",
     "stream-browserify": "^3.0.0",
+    "stream-http": "^3.2.0",
     "sweetalert2": "^11.15.10",
     "util": "^0.12.5"
   },
@@ -78,7 +82,7 @@
     "jest-environment-jsdom": "^27.5.1",
     "postcss": "^8.4.49",
     "process": "^0.11.10",
-    "react-scripts": "^5.0.1",
-    "webpack": "^5.97.1"
+    "react-scripts": "^5.0.1"
+   
   }
 }

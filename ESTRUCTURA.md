@@ -1,8 +1,6 @@
 CLIENTES
 └── 📁frontend
-    └── 📁__tests__
-        └── Login.test.js
-    └── 📁build
+       └── 📁build
         └── asset-manifest.json
         └── 📁assets
             └── favicon.ico
@@ -88,7 +86,6 @@ CLIENTES
     └── setupProxy.js
     └── webpack.config.js
 └── 📁server
-    └── 📁__tests__
     └── 📁src
         └── app.js
         └── 📁config
@@ -99,8 +96,11 @@ CLIENTES
         └── 📁routes
             └── authRoutes.js
             └── inquilinosRoutes.js
-    └── .env
     └── .gitignore
-    └── index.js
-    └── package-lock.json
-    └── package.json
+    └── .hintrc
+    └── abrir_inmobiliaria.bat
+    └── backup.dump
+    └── backup.sql
+    └── BBDD.md
+    └── ESTRUCTURA.md
+    └── README.md
