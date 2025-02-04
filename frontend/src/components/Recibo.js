@@ -29,6 +29,7 @@ const Recibo = React.forwardRef(({ inquilino }, ref) => {
     agua_importe = 0,
     tasa_importe = 0,
     otros = 0,
+    luz_importe = 0,
     importe_total = 0,
   } = inquilino;
 
@@ -36,10 +37,13 @@ const Recibo = React.forwardRef(({ inquilino }, ref) => {
     return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(value);
   };
 
-  /*const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('es-AR');
-  };*/
+  const formatDate = (date) => {
+    const d = new Date(date);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0'); // +1 porque los meses van de 0-11
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`; // dd/mm/yyyy
+  };
 
   return (
     <div ref={ref} className="container mt-5" role="document" aria-label="Recibo de Alquiler">
@@ -75,7 +79,7 @@ const Recibo = React.forwardRef(({ inquilino }, ref) => {
             <div className="col-md-4">
               <h6 className="fw-bold">MS INMOBILIARIA</h6>
               <p className="mb-1">Av. San Martín 353, Gdor Crespo, Tel: 3498 - 478730</p>
-              <p className="text-muted mb-1">Emitido el: {new Date().toLocaleDateString()}</p>
+              <p className="text-muted">Fecha de emisión: {formatDate(new Date())}</p>
             </div>
 
             {/* Columna 3: Título */}
@@ -131,7 +135,8 @@ const Recibo = React.forwardRef(({ inquilino }, ref) => {
               <li><strong>Alquileres:</strong> {formatCurrency(alquileres_importe)}</li>
               <li><strong>Agua:</strong> {formatCurrency(agua_importe)}</li>
               <li><strong>Tasa:</strong> {formatCurrency(tasa_importe)}</li>
-              <li><strong>Otros:</strong> {formatCurrency(otros)}</li>
+              <li><strong>Luz:</strong> {formatCurrency(luz_importe)}</li>
+              <li><strong>Otros/Intereses:</strong> {formatCurrency(otros)}</li>
               <li><strong>Importe Total:</strong> {formatCurrency(importe_total)}</li>
             </ul>
           </div>

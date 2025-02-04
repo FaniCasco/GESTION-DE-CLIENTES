@@ -1,22 +1,37 @@
 import React, { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useInquilinos } from '../features/inquilinos/useInquilinos';
 import Modal from 'react-modal';
 import { useForm } from 'react-hook-form';
 import logo from '../assets/img/logo.png';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import Swal from 'sweetalert2';
+import 'bootstrap-icons/font/bootstrap-icons.css';
 import 'sweetalert2/dist/sweetalert2.min.css';
+import Swal from 'sweetalert2';
+import ReactPaginate from 'react-paginate';
+
 
 Modal.setAppElement('#root');
 
 const InquilinosList = () => {
   const { data: inquilinos, isLoading, isError, error, refetch } = useInquilinos();
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const searchTerm = searchParams.get('search') || ''; // Obtiene el término de búsqueda de la URL o establece '' por defecto
+  const [currentPage, setCurrentPage] = useState(0);
   const [isViewModalOpen, setViewModalOpen] = useState(false);
   const [selectedInquilino, setSelectedInquilino] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { register, handleSubmit, reset } = useForm();
+
+  const inquilinosPerPage = 6; // Número de inquilinos por página
+
+  const handleSearchChange = (e) => {
+    setSearchParams({ search: e.target.value }); // Actualiza el término de búsqueda en la URL
+  };
+  const handlePageChange = (event) => {
+    setCurrentPage(event.selected);
+  };
 
   const handleViewClick = (inquilino) => {
     setSelectedInquilino(inquilino);
@@ -93,7 +108,7 @@ const InquilinosList = () => {
     }
   };
 
-  const handleSearchChange = (e) => setSearchTerm(e.target.value);
+  //const handleSearchChange = (e) => setSearchTerm(e.target.value);
 
   const preloadImage = (url) => {
     return new Promise((resolve, reject) => {
@@ -103,6 +118,7 @@ const InquilinosList = () => {
       img.onerror = reject;
     });
   };
+
 
   const handlePrint = async (inquilino) => {
     await preloadImage(logo); // Pre-cargar logo
@@ -240,6 +256,7 @@ const InquilinosList = () => {
           <p><strong>Alquileres:</strong> ${inquilino.alquileres_importe}</p>
           <p><strong>Agua:</strong> ${inquilino.agua_importe}</p>
           <p><strong>Tasa:</strong> ${inquilino.tasa_importe}</p>
+          <p><strong>Luz:</strong> ${inquilino.luz_importe}</p>
           <p><strong>Otros:</strong> ${inquilino.otros}</p>
           <p><strong>Total:</strong> ${inquilino.importe_total}</p>
         </div>
@@ -309,6 +326,7 @@ const InquilinosList = () => {
           <p><strong>Alquileres:</strong> ${inquilino.alquileres_importe}</p>
           <p><strong>Agua:</strong> ${inquilino.agua_importe}</p>
           <p><strong>Tasa:</strong> ${inquilino.tasa_importe}</p>
+          <p><strong>Luz:</strong> ${inquilino.luz_importe}</p>
           <p><strong>Otros:</strong> ${inquilino.otros}</p>
           <p><strong>Total:</strong> ${inquilino.importe_total}</p>
         </div>
@@ -340,25 +358,35 @@ const InquilinosList = () => {
     }, 500);
   };
 
+  // Renderizado condicional
   if (isLoading) return <p>Cargando inquilinos...</p>;
-
   if (isError) return <p>Error al cargar inquilinos: {error.message}</p>;
 
-  const filteredInquilinos = inquilinos
-    ?.filter((inquilino) => {
-      const searchLower = searchTerm.toLowerCase();
-      return (
-        inquilino.id.toString().includes(searchTerm) ||
-        inquilino.nombre.toLowerCase().includes(searchLower) ||
-        inquilino.apellido.toLowerCase().includes(searchLower) ||
-        inquilino.propietario_nombre?.toLowerCase().includes(searchLower) ||
-        inquilino.propietario_direccion?.toLowerCase().includes(searchLower) ||
-        inquilino.alquileres_adeudados?.toString().includes(searchLower) ||
-        inquilino.gastos_adeudados?.toString().includes(searchLower)
-      );
-    })
-    .sort((a, b) => a.nombre.localeCompare(b.nombre));
+  const filteredInquilinos = inquilinos?.filter((inquilino) => {
+    const searchLower = searchTerm.toLowerCase();
 
+    const matchId = inquilino.id.toString().includes(searchTerm);
+    const matchNombre = inquilino.nombre.toLowerCase().includes(searchLower);
+    const matchApellido = inquilino.apellido.toLowerCase().includes(searchLower);
+    const matchPropietario = inquilino.propietario_nombre?.toLowerCase().includes(searchLower);
+    const matchAlquileres = inquilino.alquileres_adeudados?.toString().includes(searchLower);
+    const matchGastos = inquilino.gastos_adeudados?.toString().includes(searchLower);
+
+    return (
+      matchId ||
+      matchNombre ||
+      matchApellido ||
+      matchPropietario ||
+      matchAlquileres ||
+      matchGastos
+    );
+  }).sort((a, b) => a.apellido.localeCompare(b.apellido));
+
+
+  // 2. Paginación de inquilinos filtrados
+  const indexOfLastInquilino = (currentPage + 1) * inquilinosPerPage;
+  const indexOfFirstInquilino = currentPage * inquilinosPerPage;
+  const currentInquilinos = filteredInquilinos?.slice(indexOfFirstInquilino, indexOfLastInquilino);
   // Función para formatear el nombre de los campos
   const formatFieldName = (fieldName) => {
     return fieldName
@@ -375,11 +403,12 @@ const InquilinosList = () => {
       </div>
 
       {/* Campo de búsqueda */}
-      <div className="mb-3">
+      <div className="mb-3 search-container">
+        <i className="bi bi-search search-icon"></i> {/* Icono de lupa de Bootstrap */}
         <input
           type="text"
           className="form-control"
-          placeholder="Buscar por ID, Nombre, Apellido, Alquileres adeudados (si debe/no debe) o Propietario"
+          placeholder="Buscar..."
           value={searchTerm}
           onChange={handleSearchChange}
         />
@@ -388,18 +417,20 @@ const InquilinosList = () => {
       <table className="table custom-table">
         <thead>
           <tr>
-            <th>Nombre</th>
+            <th> <i className="bi bi-person-circle me-2"></i></th>
             <th>Apellido</th>
+            <th>Nombre</th>
             <th>Teléfono</th>
             <th>Dirección</th>
             <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
-          {filteredInquilinos.map((inquilino) => (
+          {currentInquilinos?.map((inquilino, index) => (
             <tr key={inquilino.id}>
-              <td>{inquilino.nombre}</td>
+              <td>{currentPage * inquilinosPerPage + index + 1}</td>
               <td>{inquilino.apellido}</td>
+              <td>{inquilino.nombre}</td>
               <td>{inquilino.telefono}</td>
               <td>{inquilino.propietario_direccion}</td>
               <td>
@@ -437,7 +468,17 @@ const InquilinosList = () => {
           ))}
         </tbody>
       </table>
-
+      {/* Paginación */}
+      <ReactPaginate
+        previousLabel={'Anterior'}
+        nextLabel={'Siguiente'}
+        pageCount={Math.ceil(filteredInquilinos?.length / inquilinosPerPage)} // Se calcula sobre filteredInquilinos
+        marginPagesDisplayed={2}
+        pageRangeDisplayed={5}
+        onPageChange={handlePageChange}
+        containerClassName={'pagination'}
+        activeClassName={'active'}
+      />
       {/* Modal Ver y Editar */}
       <Modal
         isOpen={isViewModalOpen}

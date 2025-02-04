@@ -31,3 +31,4 @@ const shutdown = () => {
 process.on("SIGINT", shutdown); // Ctrl+C
 process.on("SIGTERM", shutdown); // Terminación desde el sistema
 
+

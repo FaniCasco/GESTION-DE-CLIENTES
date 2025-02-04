@@ -14,13 +14,18 @@ const ModalInquilino = ({ selectedInquilino }) => {
 
   const formatValue = (key, value) => {
     if (key === 'inicio_contrato' && value) {
-      return new Date(value).toLocaleDateString(); // Formatear fecha
+        const fecha = new Date(value);
+        const day = String(fecha.getDate()).padStart(2, '0');
+        const month = String(fecha.getMonth() + 1).padStart(2, '0'); // +1 porque los meses van de 0-11
+        const year = fecha.getFullYear();
+        return `${day}/${month}/${year}`;
     }
     if (key === 'telefono' && value) {
-      return value.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3'); // Formatear teléfono
+        return value.replace(/(\d{3})(\d{3})(\d{4})/, '($1) $2-$3'); // Formatear teléfono
     }
     return value || 'N/A'; // Mostrar 'N/A' si el valor es undefined o null
-  };
+};
+
 
   return (
     <div className="modal-content p-3" role="dialog" aria-labelledby="modal-title">

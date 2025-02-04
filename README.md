@@ -17,7 +17,7 @@
  Crea un archivo `.env` en la raíz del proyecto y agrega las siguientes variables de entorno:
 
 ```
-DB_HOST=localhost
+DB_HOST=ip de la maquina 1
 DB_PORT=5432
 DB_USER=postgres
 DB_PASSWORD=ParaguayS3660

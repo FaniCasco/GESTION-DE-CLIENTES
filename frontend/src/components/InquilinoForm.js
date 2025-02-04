@@ -17,7 +17,25 @@ const InquilinoForm = () => {
         try {
           const response = await api.get(`/inquilinos/${id}`);
           if (response.data) {
-            Object.keys(response.data).forEach((key) => setValue(key, response.data[key]));
+            Object.keys(response.data).forEach((key) => {
+              if (response.data[key] !== undefined) {
+                // Si el campo es una fecha, formatearla a dd/mm/yyyy
+                if (key === 'inicio_contrato' && response.data[key]) {
+                  const formattedDate = new Date(response.data[key]);
+                  const day = String(formattedDate.getDate()).padStart(2, '0');
+                  const month = String(formattedDate.getMonth() + 1).padStart(2, '0');
+                  const year = formattedDate.getFullYear();
+                  setValue(key, `${day}/${month}/${year}`);
+                } else {
+                  // Asegurarse que si el campo es de deuda se formatee correctamente
+                  if (key === 'alquileres_adeudados' || key === 'gastos_adeudados') {
+                    setValue(key, response.data[key] === 'si debe' ? 'Sí' : 'No');
+                  } else {
+                    setValue(key, response.data[key]);
+                  }
+                }
+              }
+            });
           } else {
             console.error('Error al cargar el inquilino:', 'No se encontraron datos');
             Swal.fire({
@@ -27,7 +45,6 @@ const InquilinoForm = () => {
               confirmButtonText: 'Aceptar',
             });
           }
-         
         } catch (err) {
           console.error('Error al cargar el inquilino:', err);
           Swal.fire({
@@ -47,15 +64,19 @@ const InquilinoForm = () => {
 
   const onSubmit = async (data) => {
     setIsSubmitting(true);
+
+    // Convertir fecha al formato dd/mm/yyyy para el envío
     const formattedData = {
       ...data,
-      inicio_contrato: data.inicio_contrato ? new Date(data.inicio_contrato).toISOString().split('T')[0] : null,
+      inicio_contrato: data.inicio_contrato ? 
+        `${data.inicio_contrato.split('/')[0]}/${data.inicio_contrato.split('/')[1]}/${data.inicio_contrato.split('/')[2]}` : null,
       alquileres_importe: parseFloat(data.alquileres_importe) || 0,
       agua_importe: parseFloat(data.agua_importe) || 0,
       tasa_importe: parseFloat(data.tasa_importe) || 0,
       otros: parseFloat(data.otros) || 0,
-      alquileres_adeudados: data.alquileres_adeudados === 'true' ? 'si debe' : 'no debe',
-      gastos_adeudados: data.gastos_adeudados === 'true' ? 'si debe' : 'no debe',
+      luz_importe: parseFloat(data.luz_importe) || 0,  
+      alquileres_adeudados: data.alquileres_adeudados === 'Sí' ? 'si debe' : 'no debe',
+      gastos_adeudados: data.gastos_adeudados === 'Sí' ? 'si debe' : 'no debe',
       importe_total: parseFloat(data.importe_total) || 0,
     };
 
@@ -111,7 +132,7 @@ const InquilinoForm = () => {
   const camposInquilino = [
     { label: 'Nombre', name: 'nombre', required: true },
     { label: 'Apellido', name: 'apellido', required: true },
-    { label: 'Teléfono', name: 'telefono', required: true, pattern: /^[0-9]{10}$/, message: 'El teléfono debe tener 10 dígitos' },
+    { label: 'Teléfono', name: 'telefono', required: true },
     { label: 'Periodo', name: 'periodo', required: true },
     { label: 'Contrato', name: 'contrato', required: true },
     { label: 'Inicio del Contrato', name: 'inicio_contrato', required: true, type: 'date' },
@@ -131,7 +152,8 @@ const InquilinoForm = () => {
     { label: 'Agua', name: 'agua_importe' },
     { label: 'Tasa', name: 'tasa_importe' },
     { label: 'Otros', name: 'otros' },
-    { label: 'Importe Total', name: 'importe_total' }, 
+    { label: 'Luz', name: 'luz_importe' },  // Campo Luz añadido
+    { label: 'Importe Total', name: 'importe_total' },
   ];
 
   const renderCampos = (campos) => campos.map((campo) => {
@@ -144,8 +166,8 @@ const InquilinoForm = () => {
             className={`form-control ${errors[campo.name] ? 'is-invalid' : ''}`}
             {...register(campo.name, campo.required ? { required: `${campo.label} es obligatorio` } : {})}
           >
-            <option value="si debe">Sí debe</option>
-            <option value="no debe">No debe</option>
+            <option value="Sí">Sí</option>
+            <option value="No">No</option>
           </select>
           {errors[campo.name] && <span className="text-danger">{errors[campo.name].message}</span>}
         </div>
@@ -163,7 +185,6 @@ const InquilinoForm = () => {
           aria-describedby={errors[campo.name] ? `${campo.name}-error` : undefined}
           {...register(campo.name, {
             required: campo.required ? { message: `${campo.label} es obligatorio` } : false,
-            
             pattern: campo.pattern ? { value: campo.pattern, message: campo.message } : undefined,
           })}
         />
@@ -210,6 +231,21 @@ const InquilinoForm = () => {
 };
 
 export default InquilinoForm;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

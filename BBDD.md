@@ -24,7 +24,7 @@ Este instructivo explica cómo restaurar la base de datos PostgreSQL a partir de
 
 2. **Ejecutar el Comando de Restauración**:
 
-  PGPASSWORD="ParaguayS3660" psql -U postgres -h localhost -p 5432 -d clientes -f backup.sql
+psql -U postgres -d clientes -f backup.sql
 
  
 3. **Confirmación**: Si todo se ejecuta correctamente, la base de datos será restaurada.

@@ -17,7 +17,7 @@ const AddInquilino = () => {
     setIsSubmitting(true);
     try {
       if (!data?.nombre || !data?.apellido || !data?.direccion || !data?.telefono) {
-     
+
         throw new Error('Todos los campos son obligatorios');
       }
 
@@ -40,7 +40,7 @@ const AddInquilino = () => {
       Swal.fire({
         title: '¡Inquilino Agregado!',
         text: `El inquilino ${data?.nombre} ${data?.apellido} se ha agregado correctamente.`,
-        
+
         icon: 'success',
         confirmButtonText: 'Aceptar',
       });
@@ -72,10 +72,10 @@ const AddInquilino = () => {
             {...register('nombre', { required: 'El nombre es obligatorio', minLength: { value: 2, message: 'El nombre debe tener al menos 2 caracteres' } })}
             aria-label="Nombre"
             aria-describedby={errors?.nombre ? 'nombre-error' : undefined}
-     
+
           />
           {errors?.nombre && <span id="nombre-error" className="error">{errors?.nombre?.message}</span>}
-          
+
         </div>
         <div>
           <label>Apellido:</label>
@@ -83,10 +83,10 @@ const AddInquilino = () => {
             {...register('apellido', { required: 'El apellido es obligatorio' })}
             aria-label="Apellido"
             aria-describedby={errors?.apellido ? 'apellido-error' : undefined}
-           
+
           />
           {errors?.apellido && <span id="apellido-error" className="error">{errors?.apellido?.message}</span>}
-          
+
         </div>
         <div>
           <label>Dirección:</label>
@@ -94,28 +94,28 @@ const AddInquilino = () => {
             {...register('direccion', { required: 'La dirección es obligatoria' })}
             aria-label="Dirección"
             aria-describedby={errors?.direccion ? 'direccion-error' : undefined}
-            
+
           />
           {errors?.direccion && <span id="direccion-error" className="error">{errors?.direccion?.message}</span>}
-         
+
         </div>
         <div>
           <label>Teléfono:</label>
           <input
-            {...register('telefono', {
-              required: 'El teléfono es obligatorio',
+            {...register("telefono", {
               pattern: {
-                value: /^[0-9]+$/,
-                message: 'El teléfono solo debe contener números',
+                value: /^[0-9]+$/, // Permite solo números, sin límite de longitud
+                message: "El teléfono solo debe contener números",
               },
             })}
             aria-label="Teléfono"
-            aria-describedby={errors?.telefono ? 'telefono-error' : undefined}
-           
+            aria-describedby={errors?.telefono ? "telefono-error" : undefined}
           />
-          {errors?.telefono && <span id="telefono-error" className="error">{errors?.telefono?.message}</span>}
-         
+          {errors?.telefono && (
+            <span id="telefono-error" className="error">{errors?.telefono?.message}</span>
+          )}
         </div>
+
 
         <button type="submit" disabled={isSubmitting}>
           {isSubmitting ? 'Agregando...' : 'Agregar Inquilino'}

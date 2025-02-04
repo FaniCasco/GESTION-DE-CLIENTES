@@ -239,4 +239,3 @@ const deleteInquilino = async (req, res) => {
 
 module.exports = { getAllInquilinos, getInquilinoById, addInquilino, updateInquilino, deleteInquilino };
 
-
