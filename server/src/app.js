@@ -14,6 +14,8 @@ app.use(cors({
   credentials: true,  // Si necesitas enviar cookies o tokens en las cabeceras
 }));
 
+// Servir archivos de la carpeta 'uploads'
+app.use(express.static(path.join(__dirname, 'recibos')));
 
 // Middleware para parsear JSON
 app.use(express.json());

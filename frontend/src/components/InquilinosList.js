@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useInquilinos } from '../features/inquilinos/useInquilinos';
 import Modal from 'react-modal';
@@ -13,6 +13,14 @@ import ReactPaginate from 'react-paginate';
 
 Modal.setAppElement('#root');
 
+/*const formatDate = (dateString) => {
+  if (!dateString) return ''; // Si no hay fecha, retorna un string vacío
+  const date = new Date(dateString);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0'); // Los meses van de 0 a 11
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+};*/
 const InquilinosList = () => {
   const { data: inquilinos, isLoading, isError, error, refetch } = useInquilinos();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -26,6 +34,9 @@ const InquilinosList = () => {
 
   const inquilinosPerPage = 6; // Número de inquilinos por página
 
+  useEffect(() => {
+    console.log('selectedInquilino actualizado:', selectedInquilino);
+  }, [selectedInquilino]);
   const handleSearchChange = (e) => {
     setSearchParams({ search: e.target.value }); // Actualiza el término de búsqueda en la URL
   };
@@ -35,6 +46,7 @@ const InquilinosList = () => {
 
   const handleViewClick = (inquilino) => {
     setSelectedInquilino(inquilino);
+    console.log(selectedInquilino);
     reset(inquilino);
     setIsEditing(false);
     setViewModalOpen(true);
@@ -42,6 +54,7 @@ const InquilinosList = () => {
 
   const handleEditClick = (inquilino) => {
     setSelectedInquilino(inquilino);
+    console.log(selectedInquilino);
     reset(inquilino);
     setIsEditing(true);
     setViewModalOpen(true);
@@ -84,6 +97,8 @@ const InquilinosList = () => {
       }
     }
   };
+
+
 
   const onSubmit = async (data) => {
     setIsSubmitting(true);
@@ -481,180 +496,136 @@ const InquilinosList = () => {
       />
       {/* Modal Ver y Editar */}
       <Modal
-        isOpen={isViewModalOpen}
-        onRequestClose={() => setViewModalOpen(false)}
-        contentLabel="Ver/Editar Inquilino"
-        style={{
-          content: {
-            maxWidth: '800px', // Ancho máximo del modal
-            margin: 'auto',
-            height: '85vh', // Altura del modal
-            maxHeight: '85vh', // Limita la altura máxima
-            overflowY: 'auto', // Permite el scroll solo si es necesario
-            background: '#2c2c2c', // Fondo oscuro
-            color: '#ffffff', // Texto claro
-            borderRadius: '15px', // Bordes más redondeados
-            border: 'none', // Sin borde
-            boxShadow: '0px 8px 20px rgba(0, 0, 0, 0.6)', // Sombra pronunciada
-            padding: '20px', // Espaciado interno
-            animation: 'fadeIn 0.3s ease-in-out', // Animación de entrada
-          },
-          overlay: {
-            backgroundColor: 'rgba(0, 0, 0, 0.8)', // Fondo translúcido para el overlay
-          },
-        }}
-      >
-        <h3 style={{ borderBottom: '2px solid #555', paddingBottom: '10px' }}>
-          {isEditing ? 'Editar Información del Inquilino' : 'Información del Inquilino'}
-        </h3>
-        {selectedInquilino && (
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <div
+  isOpen={isViewModalOpen}
+  onRequestClose={() => setViewModalOpen(false)}
+  contentLabel="Ver/Editar Inquilino"
+  style={{
+    content: {
+      maxWidth: '800px',
+      margin: 'auto',
+      height: '85vh',
+      maxHeight: '85vh',
+      overflowY: 'auto',
+      background: '#2c2c2c', // Fondo oscuro
+      color: '#ffffff', // Texto claro
+      borderRadius: '15px',
+      border: 'none',
+      boxShadow: '0px 8px 20px rgba(0, 0, 0, 0.6)',
+      padding: '20px',
+      animation: 'fadeIn 0.3s ease-in-out',
+    },
+    overlay: {
+      backgroundColor: 'rgba(0, 0, 0, 0.8)', // Fondo translúcido para el overlay
+    },
+  }}
+>
+  <h3 style={{ borderBottom: '2px solid #555', paddingBottom: '10px' }}>
+    {isEditing ? 'Editar Información del Inquilino' : 'Información del Inquilino'}
+  </h3>
+  {selectedInquilino && (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+        {Object.keys(selectedInquilino).map((key) => {
+          if (key === 'importe_total') return null;
+
+          const value = key === 'inicio_contrato' 
+            ? new Date(selectedInquilino[key]).toLocaleDateString('es-AR') 
+            : selectedInquilino[key];
+
+          return (
+            <div key={key}>
+              <label style={{ fontFamily: "'Poppins', sans-serif", fontWeight: '300', display: 'block', fontSize: '15px', marginBottom: '5px' }}>
+                {formatFieldName(key)}
+              </label>
+              <input
+                type="text"
+                className="form-control"
+                {...register(key)}
+                defaultValue={value}
+                readOnly={!isEditing}
+                style={{
+                  background: isEditing ? '#f5f5dc' : '#2c2c2c',
+                  color: isEditing ? 'black' : 'white',
+                  border: '1px solid #555',
+                  borderRadius: '5px',
+                  fontSize: '15px',
+                  fontFamily: "'Poppins', sans-serif",
+                  fontWeight: '300',
+                  padding: '8px',
+                }}
+              />
+            </div>
+          );
+        })}
+      </div>
+      <div className="d-flex justify-content-between mt-4">
+        {isEditing ? (
+          <>
+            <button
+              type="submit"
+              className="btn btn-success"
+              disabled={isSubmitting}
               style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr', // Dos columnas
-                gap: '15px', // Espaciado entre columnas
+                backgroundColor: '#28a745',
+                borderColor: '#28a745',
+                color: '#fff',
+                fontSize: '15px',
+                fontWeight: 'bold',
+                padding: '8px 16px',
               }}
             >
-              {Object.keys(selectedInquilino).map((key) => {
-                // Evitar que importe_total se muestre en el medio de otros campos
-                if (key === 'importe_total') return null; // No renderiza importe_total aquí
-                return (
-                  <div key={key}>
-                    <label
-                      style={{
-                        fontFamily: "'Poppins', sans-serif",
-                        fontWeight: '300',
-                        display: 'block',
-                        fontSize: '15px',
-                        marginBottom: '5px',
-                      }}
-                    >
-                      {formatFieldName(key)} {/* Aquí se aplica la función de formateo */}
-                    </label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      {...register(key)}
-                      defaultValue={selectedInquilino[key]}
-                      readOnly={!isEditing}
-                      style={{
-                        background: isEditing ? '#f5f5dc' : '#2c2c2c',
-                        color: isEditing ? 'black' : 'white',
-                        border: '1px solid #555',
-                        borderRadius: '5px',
-                        fontSize: '15px',
-                        fontFamily: "'Poppins', sans-serif",
-                        fontWeight: '300',
-                        padding: '8px',
-                      }}
-                    />
-                  </div>
-                );
-              })}
-
-              {/* Este div lo agregué para poner el campo 'importe_total' junto a otro campo en la segunda columna */}
-              <div>
-                <label
-                  style={{
-                    fontFamily: "'Poppins', sans-serif",
-                    fontWeight: '300',
-                    display: 'block',
-                    fontSize: '15px',
-                    marginBottom: '5px',
-                  }}
-                >
-                  {formatFieldName('importe_total')} {/* Aquí se aplica la función de formateo */}
-                </label>
-                <input
-                  type="text"
-                  className="form-control"
-                  {...register('importe_total')}
-                  defaultValue={selectedInquilino?.importe_total}
-                  readOnly={!isEditing}
-                  style={{
-                    background: isEditing ? '#f5f5dc' : '#2c2c2c',
-                    color: isEditing ? 'black' : 'white',
-                    border: '1px solid #555',
-                    borderRadius: '5px',
-                    fontSize: '15px',
-                    fontFamily: "'Poppins', sans-serif",
-                    fontWeight: '300',
-                    padding: '8px',
-                  }}
-                />
-              </div>
-
-            </div>
-
-            <div className="d-flex justify-content-between mt-4">
-              {isEditing ? (
-                <>
-                  <button
-                    type="submit"
-                    className="btn btn-success"
-                    disabled={isSubmitting}
-                    style={{
-                      backgroundColor: '#28a745',
-                      borderColor: '#28a745',
-                      color: '#fff',
-                      fontSize: '15px',
-                      fontWeight: 'bold',
-                      padding: '8px 16px',
-                    }}
-                  >
-                    {isSubmitting ? 'Guardando...' : 'Guardar'}
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={() => setIsEditing(false)}
-                    style={{
-                      backgroundColor: '#6c757d',
-                      borderColor: '#6c757d',
-                      color: '#fff',
-                      fontSize: '15px',
-                      fontWeight: 'bold',
-                      padding: '8px 16px',
-                    }}
-                  >
-                    Cancelar
-                  </button>
-                </>
-              ) : (
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={() => setIsEditing(true)}
-                  style={{
-                    backgroundColor: '#007bff',
-                    borderColor: '#007bff',
-                    color: '#fff',
-                    fontSize: '15px',
-                    fontWeight: 'bold',
-                    padding: '8px 16px',
-                  }}
-                >
-                  Editar
-                </button>
-              )}
-              <button
-                type="button"
-                className="btn btn-danger"
-                onClick={() => setViewModalOpen(false)}
-                style={{
-                  backgroundColor: '#dc3545',
-                  borderColor: '#dc3545',
-                  color: '#fff',
-                  fontWeight: 'bold',
-                }}
-              >
-                Cerrar
-              </button>
-            </div>
-          </form>
+              {isSubmitting ? 'Guardando...' : 'Guardar'}
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => setIsEditing(false)}
+              style={{
+                backgroundColor: '#6c757d',
+                borderColor: '#6c757d',
+                color: '#fff',
+                fontSize: '15px',
+                fontWeight: 'bold',
+                padding: '8px 16px',
+              }}
+            >
+              Cancelar
+            </button>
+          </>
+        ) : (
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => setIsEditing(true)}
+            style={{
+              backgroundColor: '#007bff',
+              borderColor: '#007bff',
+              color: '#fff',
+              fontSize: '15px',
+              fontWeight: 'bold',
+              padding: '8px 16px',
+            }}
+          >
+            Editar
+          </button>
         )}
-      </Modal>
+        <button
+          type="button"
+          className="btn btn-danger"
+          onClick={() => setViewModalOpen(false)}
+          style={{
+            backgroundColor: '#dc3545',
+            borderColor: '#dc3545',
+            color: '#fff',
+            fontWeight: 'bold',
+          }}
+        >
+          Cerrar
+        </button>
+      </div>
+    </form>
+  )}
+</Modal>
     </div>
   );
 };

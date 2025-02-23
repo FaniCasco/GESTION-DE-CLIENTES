@@ -21,11 +21,9 @@ const InquilinoForm = () => {
               if (response.data[key] !== undefined) {
                 // Si el campo es una fecha, formatearla a dd/mm/yyyy
                 if (key === 'inicio_contrato' && response.data[key]) {
-                  const formattedDate = new Date(response.data[key]);
-                  const day = String(formattedDate.getDate()).padStart(2, '0');
-                  const month = String(formattedDate.getMonth() + 1).padStart(2, '0');
-                  const year = formattedDate.getFullYear();
-                  setValue(key, `${day}/${month}/${year}`);
+                  const fecha = new Date(response.data[key]);
+                  const formattedDate = `${String(fecha.getDate()).padStart(2, '0')}/${String(fecha.getMonth() + 1).padStart(2, '0')}/${fecha.getFullYear()}`;
+                  setValue(key, formattedDate);
                 } else {
                   // Asegurarse que si el campo es de deuda se formatee correctamente
                   if (key === 'alquileres_adeudados' || key === 'gastos_adeudados') {
@@ -58,28 +56,27 @@ const InquilinoForm = () => {
         reset();
       }
     };
-
+  
     fetchInquilino();
   }, [id, setValue, reset]);
 
   const onSubmit = async (data) => {
     setIsSubmitting(true);
-
-    // Convertir fecha al formato dd/mm/yyyy para el envío
+  
+    // Convertir fecha al formato ISO para el envío
     const formattedData = {
       ...data,
-      inicio_contrato: data.inicio_contrato ? 
-        `${data.inicio_contrato.split('/')[0]}/${data.inicio_contrato.split('/')[1]}/${data.inicio_contrato.split('/')[2]}` : null,
+      inicio_contrato: data.inicio_contrato ? new Date(data.inicio_contrato.split('/').reverse().join('-')).toISOString() : null,
       alquileres_importe: parseFloat(data.alquileres_importe) || 0,
       agua_importe: parseFloat(data.agua_importe) || 0,
       tasa_importe: parseFloat(data.tasa_importe) || 0,
       otros: parseFloat(data.otros) || 0,
-      luz_importe: parseFloat(data.luz_importe) || 0,  
+      luz_importe: parseFloat(data.luz_importe) || 0,
       alquileres_adeudados: data.alquileres_adeudados === 'Sí' ? 'si debe' : 'no debe',
       gastos_adeudados: data.gastos_adeudados === 'Sí' ? 'si debe' : 'no debe',
       importe_total: parseFloat(data.importe_total) || 0,
     };
-
+  
     try {
       if (id) {
         await api.put(`/inquilinos/${id}`, formattedData);
@@ -152,7 +149,7 @@ const InquilinoForm = () => {
     { label: 'Agua', name: 'agua_importe' },
     { label: 'Tasa', name: 'tasa_importe' },
     { label: 'Otros', name: 'otros' },
-    { label: 'Luz', name: 'luz_importe' },  // Campo Luz añadido
+    { label: 'Luz', name: 'luz_importe' },
     { label: 'Importe Total', name: 'importe_total' },
   ];
 
@@ -231,7 +228,6 @@ const InquilinoForm = () => {
 };
 
 export default InquilinoForm;
-
 
 
 

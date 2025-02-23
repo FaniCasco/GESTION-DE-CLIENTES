@@ -4,19 +4,59 @@
 
  Puedes descargarlo desde [postgresql.org](https://www.postgresql.org/download/). Asegúrate de instalar la versión 13 o superior.
 
- ***Configuración de la base de datos:***
+1️⃣ **Crear la Base de Datos**
+*Ejecuta el siguiente comando en la terminal para crear la base de datos clientes:*
 
- Ejecuta el siguiente comando en la terminal para crear una base de datos y un usuario con permisos de administrador:
+psql -U postgres -c "CREATE DATABASE clientes;"
 
-```bash
-  createdb -U postgres inquilinos
-```
+
+2️⃣ **Conectarse a la Base de Datos**
+
+*Después de crear la base de datos, conéctate a ella:*
+    
+´´´sql
+
+psql -U postgres -d clientes
+
+´´´
+3️⃣ **Crear la Tabla inquilinos**
+*Dentro de psql, ejecuta el siguiente comando SQL para crear la tabla:*
+
+´´´sql
+
+CREATE TABLE inquilinos (
+    id SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    apellido VARCHAR(100) NOT NULL,
+    email VARCHAR(150) UNIQUE NOT NULL,
+    telefono VARCHAR(20),
+    direccion TEXT,
+    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+´´´
+ 4️⃣ **Verificar que la Tabla se Creó Correctamente**
+ *Ejecuta:*
+´´´sql
+
+ \dt
+
+ ´´´
+
+*Si quieres ver la estructura de la tabla:*
+
+´´´sql
+
+\d inquilinos
+
+´´´
 
   ***Configuración del archivo `.env`:***
 
  Crea un archivo `.env` en la raíz del proyecto y agrega las siguientes variables de entorno:
 
-```
+```.env
+
 DB_HOST=ip de la maquina 1
 DB_PORT=5432
 DB_USER=postgres

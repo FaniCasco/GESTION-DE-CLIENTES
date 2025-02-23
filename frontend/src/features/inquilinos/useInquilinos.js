@@ -5,7 +5,8 @@ export const useInquilinos = () => {
   return useQuery({
     queryKey: ['inquilinos'], // Clave única para la consulta
     queryFn: async () => {
-      const response = await fetch('/api/inquilinos'); // Ajusta tu endpoint
+      const response = await fetch('http://localhost:3001/api/inquilinos');
+
       if (!response.ok) {
         throw new Error('Error al cargar los inquilinos');
       }

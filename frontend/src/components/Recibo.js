@@ -1,7 +1,15 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import logo from '../assets/img/logo.png'; // Ajusta la ruta según tu estructura de archivos
 
 const Recibo = React.forwardRef(({ inquilino }, ref) => {
+  const reciboRef = useRef(null); // Referencia al div que contiene el recibo
+
+  useEffect(() => {
+    if (ref) {
+      ref.current = reciboRef.current; // Sincroniza la referencia externa 'ref' con la interna 'reciboRef'
+    }
+  }, [reciboRef, ref]); // Este efecto asegura que la referencia externa 'ref' esté siempre actualizada
+
   if (!inquilino) {
     return (
       <div className="container mt-5">
@@ -42,11 +50,12 @@ const Recibo = React.forwardRef(({ inquilino }, ref) => {
     const day = String(d.getDate()).padStart(2, '0');
     const month = String(d.getMonth() + 1).padStart(2, '0'); // +1 porque los meses van de 0-11
     const year = d.getFullYear();
-    return `${day}/${month}/${year}`; // dd/mm/yyyy
+    return `${day}-${month}-${year}`; // Ahora es dd-mm-yyyy
   };
+  
 
   return (
-    <div ref={ref} className="container mt-5" role="document" aria-label="Recibo de Alquiler">
+    <div ref={reciboRef} className="container mt-5" role="document" aria-label="Recibo de Alquiler"> {/* Usamos la referencia ref={reciboRef} */}
       <div
         className="card shadow-sm p-4"
         style={{
@@ -161,7 +170,6 @@ const Recibo = React.forwardRef(({ inquilino }, ref) => {
 });
 
 export default Recibo;
-
 
 
 
