@@ -40,6 +40,7 @@ const getAllInquilinos = async (req, res) => {
       gastos_adeudados,
       alquileres_importe,
       agua_importe,
+      luz_importe,
       tasa_importe,
       otros,
       importe_total
@@ -77,6 +78,7 @@ const getInquilinoById = async (req, res) => {
         gastos_adeudados,
         alquileres_importe,
         agua_importe,
+        luz_importe,
         tasa_importe,
         otros,
         importe_total
@@ -101,7 +103,7 @@ const addInquilino = async (req, res) => {
     nombre, apellido, telefono, inicio_contrato, periodo, contrato,
     aumento, propietario_nombre, propietario_direccion, propietario_localidad,
     alquileres_adeudados, gastos_adeudados, alquileres_importe,
-    agua_importe, tasa_importe, otros, importe_total
+    agua_importe, luz_importe, tasa_importe, otros, importe_total
   } = req.body;
 
   if (!nombre || !apellido || !telefono || !inicio_contrato || !periodo || !contrato ||
@@ -115,6 +117,7 @@ const addInquilino = async (req, res) => {
   const numericFields = {
     alquileres_importe: parseFloat(alquileres_importe) || 0,
     agua_importe: parseFloat(agua_importe) || 0,
+    luz_importe: parseFloat(luz_importe) || 0,
     tasa_importe: parseFloat(tasa_importe) || 0,
     otros: parseFloat(otros) || 0,
     importe_total: parseFloat(importe_total) || 0,
@@ -126,9 +129,9 @@ const addInquilino = async (req, res) => {
         nombre, apellido, telefono, inicio_contrato, periodo, contrato, aumento, 
         propietario_nombre, propietario_direccion, propietario_localidad, 
         alquileres_adeudados, gastos_adeudados, alquileres_importe, 
-        agua_importe, tasa_importe, otros, importe_total
+        agua_importe, luz_importe, tasa_importe, otros, importe_total
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
       RETURNING *;
     `;
 
@@ -136,7 +139,7 @@ const addInquilino = async (req, res) => {
       nombre, apellido, telefono, fechaISO, periodo, contrato, aumento,
       propietario_nombre, propietario_direccion, propietario_localidad,
       alquileres_adeudados, gastos_adeudados, numericFields.alquileres_importe,
-      numericFields.agua_importe, numericFields.tasa_importe, numericFields.otros,
+      numericFields.agua_importe, numericFields.luz_importe, numericFields.tasa_importe, numericFields.otros,
       numericFields.importe_total,
     ];
 
@@ -154,7 +157,7 @@ const updateInquilino = async (req, res) => {
   const {
     nombre, apellido, telefono, inicio_contrato, periodo, contrato, aumento,
     propietario_nombre, propietario_direccion, propietario_localidad,
-    alquileres_adeudados, gastos_adeudados, alquileres_importe, agua_importe,
+    alquileres_adeudados, gastos_adeudados, alquileres_importe, agua_importe, luz_importe,
     tasa_importe, otros, importe_total
   } = req.body;
 
@@ -165,15 +168,15 @@ const updateInquilino = async (req, res) => {
         periodo = $5, contrato = $6, aumento = $7, propietario_nombre = $8,
         propietario_direccion = $9, propietario_localidad = $10,
         alquileres_adeudados = $11, gastos_adeudados = $12,
-        alquileres_importe = $13, agua_importe = $14, tasa_importe = $15,
-        otros = $16, importe_total = $17
-      WHERE id = $18 RETURNING *;
+        alquileres_importe = $13, agua_importe = $14, luz_importe = $15, tasa_importe = $16,
+        otros = $17, importe_total = $18
+      WHERE id = $19 RETURNING *;
     `;
 
     const values = [
       nombre, apellido, telefono, inicio_contrato, periodo, contrato, aumento,
       propietario_nombre, propietario_direccion, propietario_localidad,
-      alquileres_adeudados, gastos_adeudados, alquileres_importe, agua_importe,
+      alquileres_adeudados, gastos_adeudados, alquileres_importe, agua_importe, luz_importe,
       tasa_importe, otros, importe_total, id
     ];
 

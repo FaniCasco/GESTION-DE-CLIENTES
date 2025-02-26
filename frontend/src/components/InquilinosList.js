@@ -9,22 +9,15 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 import 'sweetalert2/dist/sweetalert2.min.css';
 import Swal from 'sweetalert2';
 import ReactPaginate from 'react-paginate';
-
+//import { FaHome, FaUser, FaPhone, FaCalendarAlt, FaFileContract, FaChartLine, FaTint, FaLightbulb, FaBox, FaMoneyBillAlt } from 'react-icons/fa';
+//import html2canvas from 'html2canvas';
 
 Modal.setAppElement('#root');
 
-/*const formatDate = (dateString) => {
-  if (!dateString) return ''; // Si no hay fecha, retorna un string vacío
-  const date = new Date(dateString);
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0'); // Los meses van de 0 a 11
-  const year = date.getFullYear();
-  return `${day}/${month}/${year}`;
-};*/
 const InquilinosList = () => {
   const { data: inquilinos, isLoading, isError, error, refetch } = useInquilinos();
   const [searchParams, setSearchParams] = useSearchParams();
-  const searchTerm = searchParams.get('search') || ''; // Obtiene el término de búsqueda de la URL o establece '' por defecto
+  const searchTerm = searchParams.get('search') || '';
   const [currentPage, setCurrentPage] = useState(0);
   const [isViewModalOpen, setViewModalOpen] = useState(false);
   const [selectedInquilino, setSelectedInquilino] = useState(null);
@@ -32,21 +25,22 @@ const InquilinosList = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { register, handleSubmit, reset } = useForm();
 
-  const inquilinosPerPage = 6; // Número de inquilinos por página
+  const inquilinosPerPage = 6;
 
   useEffect(() => {
     console.log('selectedInquilino actualizado:', selectedInquilino);
   }, [selectedInquilino]);
+
   const handleSearchChange = (e) => {
-    setSearchParams({ search: e.target.value }); // Actualiza el término de búsqueda en la URL
+    setSearchParams({ search: e.target.value });
   };
+
   const handlePageChange = (event) => {
     setCurrentPage(event.selected);
   };
 
   const handleViewClick = (inquilino) => {
     setSelectedInquilino(inquilino);
-    console.log(selectedInquilino);
     reset(inquilino);
     setIsEditing(false);
     setViewModalOpen(true);
@@ -54,7 +48,6 @@ const InquilinosList = () => {
 
   const handleEditClick = (inquilino) => {
     setSelectedInquilino(inquilino);
-    console.log(selectedInquilino);
     reset(inquilino);
     setIsEditing(true);
     setViewModalOpen(true);
@@ -84,7 +77,7 @@ const InquilinosList = () => {
           confirmButtonColor: '#3085d6',
         });
 
-        refetch(); // Actualiza los datos tras la eliminación
+        refetch();
       } catch (error) {
         const errorMessage = error.response?.data?.message || 'Hubo un problema al intentar eliminar el inquilino.';
         Swal.fire({
@@ -98,14 +91,10 @@ const InquilinosList = () => {
     }
   };
 
-
-
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
       const updatedInquilino = { ...selectedInquilino, ...data };
-      console.log('Actualizando inquilino:', updatedInquilino);
-
       await fetch(`/api/inquilinos/${selectedInquilino.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -115,15 +104,13 @@ const InquilinosList = () => {
       refetch();
       setIsEditing(false);
       setViewModalOpen(false);
-      reset(); // Resetea el formulario
+      reset();
     } catch (error) {
       console.error('Error al actualizar los datos del inquilino', error);
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  //const handleSearchChange = (e) => setSearchTerm(e.target.value);
 
   const preloadImage = (url) => {
     return new Promise((resolve, reject) => {
@@ -134,13 +121,10 @@ const InquilinosList = () => {
     });
   };
 
-
   const handlePrint = async (inquilino) => {
-    await preloadImage(logo); // Pre-cargar logo
+    await preloadImage(logo);
 
     const printWindow = window.open('', '_blank', 'height=900,width=1200');
-
-    // Generar el contenido dinámico con las variables reales
     const content = `
 <!DOCTYPE html>
 <html lang="es">
@@ -364,16 +348,59 @@ const InquilinosList = () => {
 </html>
     `;
 
-    // Escribir el contenido y lanzar la impresión
-    printWindow.document.write(content);
 
-    // Espera 500ms para garantizar que todo se haya renderizado antes de imprimir
+    printWindow.document.write(content);
     setTimeout(() => {
       printWindow.print();
     }, 500);
   };
 
-  // Renderizado condicional
+  const handleSendWhatsApp = (inquilino) => {
+    const phoneNumber = inquilino.telefono.replace(/\D/g, ''); // Elimina todo lo que no sea número
+
+    // Crear el mensaje del recibo con formato enriquecido
+    const message = `
+  🏠 *Recibo de Alquiler* 🏠
+https://postimg.cc/mPst7Kzn  
+  *Inquilino:*
+  👤 ${inquilino.nombre} ${inquilino.apellido}
+  📞 ${inquilino.telefono}
+  
+  *Propietario:*
+  👤 ${inquilino.propietario_nombre}
+  📍 ${inquilino.propietario_direccion}
+  🏙️ ${inquilino.propietario_localidad}
+  
+  *Detalles del Alquiler:*
+  📅 Período: ${inquilino.periodo}
+  📄 Contrato: ${inquilino.contrato}
+  📈 Aumento: ${inquilino.aumento}
+  📊 Estado: ${inquilino.alquileres_adeudados > 0 ? `${inquilino.alquileres_adeudados} meses adeudados` : 'Al día'}
+  
+  *Detalles de Liquidación:*
+  💰 Alquileres: ${inquilino.alquileres_importe}
+  💧 Agua: ${inquilino.agua_importe}
+  📜 Tasa: ${inquilino.tasa_importe}
+  💡 Luz: ${inquilino.luz_importe}
+  📦 Otros: ${inquilino.otros}
+  
+  *Total a Pagar:*
+  💵 ${inquilino.importe_total}
+  
+  Gracias por tu pago. 🎉
+  
+  *MS Inmobiliaria*
+  📞 Tel: 3498 - 478730
+  📍 Av. San Martín 353, Gdor Crespo
+    `;
+
+    // Crear el enlace de WhatsApp Web
+    const whatsappUrl = `https://web.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`;
+
+    // Abrir WhatsApp en una nueva pestaña
+    window.open(whatsappUrl, '_blank');
+  };
+
   if (isLoading) return <p>Cargando inquilinos...</p>;
   if (isError) return <p>Error al cargar inquilinos: {error.message}</p>;
 
@@ -397,29 +424,25 @@ const InquilinosList = () => {
     );
   }).sort((a, b) => a.apellido.localeCompare(b.apellido));
 
-
-  // 2. Paginación de inquilinos filtrados
   const indexOfLastInquilino = (currentPage + 1) * inquilinosPerPage;
   const indexOfFirstInquilino = currentPage * inquilinosPerPage;
   const currentInquilinos = filteredInquilinos?.slice(indexOfFirstInquilino, indexOfLastInquilino);
-  // Función para formatear el nombre de los campos
+
   const formatFieldName = (fieldName) => {
     return fieldName
-      .split('_') // Divide el nombre del campo por el guion bajo
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1)) // Capitaliza la primera letra de cada palabra
-      .join(' '); // Vuelve a unir las palabras con un espacio
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   };
 
   return (
     <div className="container mt-4">
-      {/* Ajuste del título */}
       <div className="p-3 mb-4 bg-agregar text-white rounded shadow">
         <h4 className="text-center mb-0">Lista de Inquilinos</h4>
       </div>
 
-      {/* Campo de búsqueda */}
       <div className="mb-3 search-container">
-        <i className="bi bi-search search-icon"></i> {/* Icono de lupa de Bootstrap */}
+        <i className="bi bi-search search-icon"></i>
         <input
           type="text"
           className="form-control"
@@ -472,160 +495,170 @@ const InquilinosList = () => {
                 </button>
 
                 <button
-                  className="btn btn-sm"
-                  style={{ backgroundColor: '#28a745', color: '#fff' }}
-                  onClick={() => handlePrint(inquilino)} // Botón de imprimir
+                  className="btn btn-sm me-2"
+                  style={{ backgroundColor: '#7028a7', color: '#fff' }}
+                  onClick={() => handlePrint(inquilino)}
                 >
                   <i className="bi bi-printer"></i>
+                </button>
+
+
+                <button
+                className="btn btn-sm me-2"
+                  style={{ backgroundColor: '#05933a', color: '#fff' }}
+                  onClick={() => handleSendWhatsApp(inquilino)}
+                >
+                  <i className="bi bi-whatsapp"></i>
+                 
                 </button>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
-      {/* Paginación */}
+
       <ReactPaginate
         previousLabel={'Anterior'}
         nextLabel={'Siguiente'}
-        pageCount={Math.ceil(filteredInquilinos?.length / inquilinosPerPage)} // Se calcula sobre filteredInquilinos
+        pageCount={Math.ceil(filteredInquilinos?.length / inquilinosPerPage)}
         marginPagesDisplayed={2}
         pageRangeDisplayed={5}
         onPageChange={handlePageChange}
         containerClassName={'pagination'}
         activeClassName={'active'}
       />
-      {/* Modal Ver y Editar */}
+
       <Modal
-  isOpen={isViewModalOpen}
-  onRequestClose={() => setViewModalOpen(false)}
-  contentLabel="Ver/Editar Inquilino"
-  style={{
-    content: {
-      maxWidth: '800px',
-      margin: 'auto',
-      height: '85vh',
-      maxHeight: '85vh',
-      overflowY: 'auto',
-      background: '#2c2c2c', // Fondo oscuro
-      color: '#ffffff', // Texto claro
-      borderRadius: '15px',
-      border: 'none',
-      boxShadow: '0px 8px 20px rgba(0, 0, 0, 0.6)',
-      padding: '20px',
-      animation: 'fadeIn 0.3s ease-in-out',
-    },
-    overlay: {
-      backgroundColor: 'rgba(0, 0, 0, 0.8)', // Fondo translúcido para el overlay
-    },
-  }}
->
-  <h3 style={{ borderBottom: '2px solid #555', paddingBottom: '10px' }}>
-    {isEditing ? 'Editar Información del Inquilino' : 'Información del Inquilino'}
-  </h3>
-  {selectedInquilino && (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-        {Object.keys(selectedInquilino).map((key) => {
-          if (key === 'importe_total') return null;
+        isOpen={isViewModalOpen}
+        onRequestClose={() => setViewModalOpen(false)}
+        contentLabel="Ver/Editar Inquilino"
+        style={{
+          content: {
+            maxWidth: '800px',
+            margin: 'auto',
+            height: '85vh',
+            maxHeight: '85vh',
+            overflowY: 'auto',
+            background: '#2c2c2c',
+            color: '#ffffff',
+            borderRadius: '15px',
+            border: 'none',
+            boxShadow: '0px 8px 20px rgba(0, 0, 0, 0.6)',
+            padding: '20px',
+            animation: 'fadeIn 0.3s ease-in-out',
+          },
+          overlay: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          },
+        }}
+      >
+        <h3 style={{ borderBottom: '2px solid #555', paddingBottom: '10px' }}>
+          {isEditing ? 'Editar Información del Inquilino' : 'Información del Inquilino'}
+        </h3>
+        {selectedInquilino && (
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+              {Object.keys(selectedInquilino).map((key) => {
+                if (key === 'importe_total') return null;
 
-          const value = key === 'inicio_contrato' 
-            ? new Date(selectedInquilino[key]).toLocaleDateString('es-AR') 
-            : selectedInquilino[key];
+                const value = key === 'inicio_contrato'
+                  ? new Date(selectedInquilino[key]).toLocaleDateString('es-AR')
+                  : selectedInquilino[key];
 
-          return (
-            <div key={key}>
-              <label style={{ fontFamily: "'Poppins', sans-serif", fontWeight: '300', display: 'block', fontSize: '15px', marginBottom: '5px' }}>
-                {formatFieldName(key)}
-              </label>
-              <input
-                type="text"
-                className="form-control"
-                {...register(key)}
-                defaultValue={value}
-                readOnly={!isEditing}
-                style={{
-                  background: isEditing ? '#f5f5dc' : '#2c2c2c',
-                  color: isEditing ? 'black' : 'white',
-                  border: '1px solid #555',
-                  borderRadius: '5px',
-                  fontSize: '15px',
-                  fontFamily: "'Poppins', sans-serif",
-                  fontWeight: '300',
-                  padding: '8px',
-                }}
-              />
+                return (
+                  <div key={key}>
+                    <label style={{ fontFamily: "'Poppins', sans-serif", fontWeight: '300', display: 'block', fontSize: '15px', marginBottom: '5px' }}>
+                      {formatFieldName(key)}
+                    </label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      {...register(key)}
+                      defaultValue={value}
+                      readOnly={!isEditing}
+                      style={{
+                        background: isEditing ? '#f5f5dc' : '#2c2c2c',
+                        color: isEditing ? 'black' : 'white',
+                        border: '1px solid #555',
+                        borderRadius: '5px',
+                        fontSize: '15px',
+                        fontFamily: "'Poppins', sans-serif",
+                        fontWeight: '300',
+                        padding: '8px',
+                      }}
+                    />
+                  </div>
+                );
+              })}
             </div>
-          );
-        })}
-      </div>
-      <div className="d-flex justify-content-between mt-4">
-        {isEditing ? (
-          <>
-            <button
-              type="submit"
-              className="btn btn-success"
-              disabled={isSubmitting}
-              style={{
-                backgroundColor: '#28a745',
-                borderColor: '#28a745',
-                color: '#fff',
-                fontSize: '15px',
-                fontWeight: 'bold',
-                padding: '8px 16px',
-              }}
-            >
-              {isSubmitting ? 'Guardando...' : 'Guardar'}
-            </button>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => setIsEditing(false)}
-              style={{
-                backgroundColor: '#6c757d',
-                borderColor: '#6c757d',
-                color: '#fff',
-                fontSize: '15px',
-                fontWeight: 'bold',
-                padding: '8px 16px',
-              }}
-            >
-              Cancelar
-            </button>
-          </>
-        ) : (
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={() => setIsEditing(true)}
-            style={{
-              backgroundColor: '#007bff',
-              borderColor: '#007bff',
-              color: '#fff',
-              fontSize: '15px',
-              fontWeight: 'bold',
-              padding: '8px 16px',
-            }}
-          >
-            Editar
-          </button>
+            <div className="d-flex justify-content-between mt-4">
+              {isEditing ? (
+                <>
+                  <button
+                    type="submit"
+                    className="btn btn-success"
+                    disabled={isSubmitting}
+                    style={{
+                      backgroundColor: '#28a745',
+                      borderColor: '#28a745',
+                      color: '#fff',
+                      fontSize: '15px',
+                      fontWeight: 'bold',
+                      padding: '8px 16px',
+                    }}
+                  >
+                    {isSubmitting ? 'Guardando...' : 'Guardar'}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={() => setIsEditing(false)}
+                    style={{
+                      backgroundColor: '#6c757d',
+                      borderColor: '#6c757d',
+                      color: '#fff',
+                      fontSize: '15px',
+                      fontWeight: 'bold',
+                      padding: '8px 16px',
+                    }}
+                  >
+                    Cancelar
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => setIsEditing(true)}
+                  style={{
+                    backgroundColor: '#007bff',
+                    borderColor: '#007bff',
+                    color: '#fff',
+                    fontSize: '15px',
+                    fontWeight: 'bold',
+                    padding: '8px 16px',
+                  }}
+                >
+                  Editar
+                </button>
+              )}
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={() => setViewModalOpen(false)}
+                style={{
+                  backgroundColor: '#dc3545',
+                  borderColor: '#dc3545',
+                  color: '#fff',
+                  fontWeight: 'bold',
+                }}
+              >
+                Cerrar
+              </button>
+            </div>
+          </form>
         )}
-        <button
-          type="button"
-          className="btn btn-danger"
-          onClick={() => setViewModalOpen(false)}
-          style={{
-            backgroundColor: '#dc3545',
-            borderColor: '#dc3545',
-            color: '#fff',
-            fontWeight: 'bold',
-          }}
-        >
-          Cerrar
-        </button>
-      </div>
-    </form>
-  )}
-</Modal>
+      </Modal>
     </div>
   );
 };
