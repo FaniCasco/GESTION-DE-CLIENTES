@@ -11,6 +11,7 @@ import Swal from 'sweetalert2';
 import ReactPaginate from 'react-paginate';
 
 
+
 Modal.setAppElement('#root');
 
 const InquilinosList = () => {
@@ -120,6 +121,197 @@ const InquilinosList = () => {
     });
   };
 
+  const handleSaveReceipt = async (inquilino) => {
+    try {
+      // 1. Crear elemento temporal con dimensiones exactas
+      const receiptElement = document.createElement('div');
+      receiptElement.style.width = '210mm'; // Ancho completo A4
+      receiptElement.style.minHeight = '148mm'; // Mitad de altura A4
+      receiptElement.style.position = 'absolute';
+      receiptElement.style.left = '-9999px';
+      receiptElement.style.background = 'white';
+      receiptElement.style.boxSizing = 'border-box';
+      receiptElement.style.padding = '10mm'; // Margen interno
+  
+      // 2. HTML del recibo con estructura compacta
+      receiptElement.innerHTML = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <style>
+          body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            font-family: Arial;
+          }
+          .receipt-content {
+            width: 190mm;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 5mm;
+          }
+          .logo {
+            width: 80px;
+            height: auto;
+          }
+          .header {
+            grid-column: 1 / 4;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5mm;
+          }
+          .section {
+            margin-bottom: 3mm;
+          }
+          .section-title {
+            font-weight: bold;
+            font-size: 12px;
+            margin-bottom: 2mm;
+            border-bottom: 1px solid #000;
+          }
+          .section-content {
+            font-size: 11px;
+          }
+          .total {
+            font-weight: bold;
+            margin-top: 2mm;
+          }
+          .signatures {
+            grid-column: 1 / 4;
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10mm;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div>
+            <h4>MS INMOBILIARIA</h4>
+            <p>Av. San Martín 353,<br>Gdor Crespo<br>Tel: 3498 - 478730</p>
+            <p>Emitido el:<br>${new Date().toLocaleDateString()}</p>
+          </div>
+          <img src="${window.location.origin}/assets/img/logo.png" class="logo">
+          <h3>Recibo de Alquiler</h3>
+        </div>
+  
+        <div class="receipt-content">
+          <!-- Columna 1 -->
+          <div class="section">
+            <div class="section-title">Propietario</div>
+            <div class="section-content">
+              ${inquilino.propietario_nombre}<br>
+              ${inquilino.propietario_direccion}<br>
+              ${inquilino.propietario_localidad}
+            </div>
+          </div>
+  
+          <!-- Columna 2 -->
+          <div class="section">
+            <div class="section-title">Inquilino</div>
+            <div class="section-content">
+              ${inquilino.nombre} ${inquilino.apellido}<br>
+              Teléfono:<br>
+              ${inquilino.telefono}
+            </div>
+          </div>
+  
+          <!-- Columna 3 -->
+          <div class="section">
+            <div class="section-title">Otros Conceptos</div>
+            <div class="section-content">
+              ${inquilino.otros || '-'}
+            </div>
+          </div>
+  
+          <!-- Detalles del Alquiler -->
+          <div class="section">
+            <div class="section-title">Detalles del Alquiler</div>
+            <div class="section-content">
+              Período:<br>${inquilino.periodo}<br><br>
+              Contrato:<br>${inquilino.contrato}<br><br>
+              Aumento:<br>${inquilino.aumento}<br><br>
+              Estado: ${inquilino.alquileres_adeudados > 0 ? `${inquilino.alquileres_adeudados} meses adeudados` : 'Al día'}
+            </div>
+          </div>
+  
+          <!-- Detalles de Liquidación -->
+          <div class="section">
+            <div class="section-title">Detalles de Liquidación</div>
+            <div class="section-content">
+              Alquileres:<br>${inquilino.alquileres_importe}<br><br>
+              Otros:<br>${inquilino.otros || '0.00'}
+            </div>
+          </div>
+  
+          <!-- Impuestos -->
+          <div class="section">
+            <div class="section-title">Impuestos</div>
+            <div class="section-content">
+              Agua:<br>${inquilino.agua_importe}<br><br>
+              Luz:<br>${inquilino.luz_importe}<br><br>
+              Tasa:<br>${inquilino.tasa_importe}<br><br>
+              <div class="total">Total:<br>${inquilino.importe_total}</div>
+            </div>
+          </div>
+  
+          <!-- Firmas -->
+          <div class="signatures">
+            <div>
+              <div style="height: 30mm; border-bottom: 1px solid #000;"></div>
+              <p>Firma Inmobiliaria</p>
+            </div>
+            <div>
+              <div style="height: 30mm; border-bottom: 1px solid #000;"></div>
+              <p>Firma del Inquilino</p>
+            </div>
+          </div>
+        </div>
+      </body>
+      </html>
+      `;
+  
+      document.body.appendChild(receiptElement);
+  
+      // 3. Configuración optimizada para html2canvas
+      const { jsPDF } = await import('jspdf');
+      const html2canvas = await import('html2canvas');
+      
+      const canvas = await html2canvas.default(receiptElement, {
+        scale: 2,
+        logging: false,
+        useCORS: true,
+        windowWidth: receiptElement.scrollWidth,
+        windowHeight: receiptElement.scrollHeight,
+        scrollX: 0,
+        scrollY: 0
+      });
+  
+      // 4. Generar PDF con proporciones correctas
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgData = canvas.toDataURL('image/png');
+      
+      // Calcular dimensiones manteniendo aspecto
+      const imgRatio = canvas.width / canvas.height;
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const targetHeight = pdfWidth / imgRatio;
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, targetHeight);
+      
+      pdf.save(`Recibo_${inquilino.apellido}.pdf`);
+  
+      document.body.removeChild(receiptElement);
+      Swal.fire('Éxito', 'Recibo generado correctamente', 'success');
+    } catch (error) {
+      console.error('Error al generar recibo:', error);
+      Swal.fire('Error', 'No se pudo generar el recibo', 'error');
+    }
+  };
   const handlePrint = async (inquilino) => {
     await preloadImage(logo);
 
@@ -851,6 +1043,15 @@ https://postimg.cc/mPst7Kzn
                 >
                   <i className="bi bi-whatsapp"></i>
 
+                </button>
+
+                <button
+                  className="btn btn-sm me-2"
+                  style={{ backgroundColor: '#28a745', color: '#fff' }}
+                  onClick={() => handleSaveReceipt(inquilino)}
+                  title="Guardar recibo"
+                >
+                  <i className="bi bi-save"></i>
                 </button>
               </td>
             </tr>
