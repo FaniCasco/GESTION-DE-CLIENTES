@@ -133,14 +133,19 @@ const InquilinosList = () => {
   <title>Recibo de Alquiler</title>
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" />
   <style>
+   @page {
+        size: A4;
+        margin: 10mm;
+      }
     @media print {
+     
       .card {
-        padding: 20px;
+        padding: 10px;
         border: 1px solid #000;
-        max-width: 900px;
-        height: 600px;
-        margin: 0 auto;
-        padding-top: 50px;
+        max-width: 100%;
+        height: 530px;
+        margin: 0 auto 10px auto;
+        page-break-inside: avoid;
       }
       .row {
         display: flex;
@@ -150,7 +155,7 @@ const InquilinosList = () => {
         width: 33.33%;
       }
       img.logo {
-        max-width: 80px;
+        max-width: 110px;
         height: auto;
       }
       h5, h6 {
@@ -158,55 +163,56 @@ const InquilinosList = () => {
         margin-bottom: 5px;
       }
       p {
-        font-size: 12px;
+        font-size: 18px;
         margin-bottom: 3px;
       }
     }
     body {
       font-family: Arial, sans-serif;
       margin: 0;
+    
     }
     .card {
       padding: 15px;
-      border-radius: 10px;
-      border: 1px solid #000;
-      max-width: 900px;
-      height: 600px;
-      margin: 15px auto;
+      border-radius: 10px;      
+      max-width: 1000px;
+      height: auto;
+      margin: 13px auto;
       padding-top: 50px;
     }
     .header-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
     .logo {
-      width: 100px;
+      width: 110px;
       height: auto;
     }
     .row {
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
     h5, h6 {
       color: #4a90e2;
       margin-bottom: 5px;
     }
     p {
-      font-size: 14px;
+      font-size: 18px;
       margin-bottom: 5px;
     }
-    .linea {
-      border-bottom: 1px solid #000;
-      height: 1rem;
-      margin-top: 10px;
+   
+    .list-group-item {
+      padding: 3px 10px;
+      border: none;
+      font-size: 1.2rem;
     }
   </style>
 </head>
 <body>
-  <div class="container mt-5">
+  <div class="container">
     <!-- Primer recibo -->
-    <div class="card shadow-sm">
+    <div class="card">
       <!-- Cabecera -->
       <div class="row mb-3 header-row">
         <div class="col-4 text-left">
@@ -227,56 +233,81 @@ const InquilinosList = () => {
       <div class="row mb-3 border-top pt-3">
         <div class="col-4">
           <h5 class="fw-bold">Propietario</h5>
-          <p>${inquilino.propietario_nombre}</p>
-          <p>${inquilino.propietario_direccion}</p>
-          <p>${inquilino.propietario_localidad}</p>
+          <ul class="list-group">
+            <li class="list-group-item">${inquilino.propietario_nombre}</li>
+            <li class="list-group-item">${inquilino.propietario_direccion}</li>
+            <li class="list-group-item">${inquilino.propietario_localidad}</li>
+          </ul>
         </div>
-        <div class="col-4">
-          <h5 class="fw-bold">Otros Conceptos</h5>
-        </div>
+
         <div class="col-4">
           <h5 class="fw-bold">Inquilino</h5>
-          <p>${inquilino.nombre} ${inquilino.apellido}</p>
-          <p>Teléfono: ${inquilino.telefono}</p>
+          <ul class="list-group">
+            <li class="list-group-item">${inquilino.nombre} ${inquilino.apellido}</li>
+            <li class="list-group-item">Teléfono: ${inquilino.telefono}</li>
+          </ul>
+        </div>
+
+        <div class="col-4">
+          <h5 class="fw-bold">Otros Conceptos</h5>
+          <ul class="list-group">
+            <li class="list-group-item"></li>
+          </ul>
         </div>
       </div>
 
       <div class="row mb-3 border-top pt-3">
         <div class="col-4">
           <h5 class="fw-bold">Detalles del Alquiler</h5>
-          <p><strong>Periodo:</strong> ${inquilino.periodo}</p>
-          <p><strong>Contrato:</strong> ${inquilino.contrato}</p>
-          <p><strong>Aumento:</strong> ${inquilino.aumento}</p>
-          <p><strong>Estado:</strong> ${inquilino.alquileres_adeudados > 0 ? `${inquilino.alquileres_adeudados} meses adeudados` : 'Al día'}</p>
+          <ul class="list-group">
+            <li class="list-group-item"><strong>Periodo:</strong> ${inquilino.periodo}</li>
+            <li class="list-group-item"><strong>Contrato:</strong> ${inquilino.contrato}</li>
+            <li class="list-group-item"><strong>Aumento:</strong> ${inquilino.aumento}</li>
+            <li class="list-group-item"><strong>Estado:</strong> ${inquilino.alquileres_adeudados > 0 ? `${inquilino.alquileres_adeudados} meses adeudados` : 'Al día'}</li>
+          </ul>
         </div>
+
         <div class="col-4">
           <h5 class="fw-bold">Detalles de Liquidación</h5>
-          <p><strong>Alquileres:</strong> ${inquilino.alquileres_importe}</p>
-          <p><strong>Agua:</strong> ${inquilino.agua_importe}</p>
-          <p><strong>Tasa:</strong> ${inquilino.tasa_importe}</p>
-          <p><strong>Luz:</strong> ${inquilino.luz_importe}</p>
-          <p><strong>Otros:</strong> ${inquilino.otros}</p>
-          <p><strong>Total:</strong> ${inquilino.importe_total}</p>
+          <ul class="list-group">
+            <li class="list-group-item"><strong>Alquileres:</strong> ${inquilino.alquileres_importe}</li>
+            <li class="list-group-item"><strong>Otros:</strong> ${inquilino.otros}</li>
+          </ul>
+        </div>
+
+        <div class="col-4">
+          <h5 class="fw-bold">Impuestos</h5>
+          <ul class="list-group">
+            <li class="list-group-item"><strong>Agua:</strong> ${inquilino.agua_importe}</li>
+            <li class="list-group-item"><strong>Luz:</strong> ${inquilino.luz_importe}</li>
+            <li class="list-group-item"><strong>Tasa:</strong> ${inquilino.tasa_importe}</li>
+            <li class="list-group-item"><strong>Total:</strong> ${inquilino.importe_total}</li>
+          </ul>
         </div>
       </div>
 
       <!-- Firmas -->
-      <div class="row text-center mt-3">
+      <div class="row text-center mt-4" style="margin-top: 60px;">
         <div class="col-6">
-          <div class="linea"></div>
-          <p>Firma Inmobiliaria</p>
+          <div class="firma-digital" style="height: 80px;">
+            <!-- Aquí va la firma digital como imagen -->
+            <img src="${window.location.origin}/assets/img/firma_digital.png" alt="Firma Digital" style="max-height: 80px;" />
+          </div>
+          
+          <p class="mt-1">Firma Inmobiliaria</p>
         </div>
         <div class="col-6">
-          <div class="linea"></div>
-          <p>Firma del Inquilino</p>
+          <div class="linea" style="margin-top: 80px;"></div>
+          <p class="mt-1">Firma del Inquilino</p>
         </div>
       </div>
+
     </div>
   </div>
 
-  <div class="container mt-5">
+  <div class="container">
     <!-- Segundo recibo -->
-    <div class="card shadow-sm">
+    <div class="card">
       <!-- Cabecera -->
       <div class="row mb-3 header-row">
         <div class="col-4 text-left">
@@ -297,54 +328,80 @@ const InquilinosList = () => {
       <div class="row mb-3 border-top pt-3">
         <div class="col-4">
           <h5 class="fw-bold">Propietario</h5>
-          <p>${inquilino.propietario_nombre}</p>
-          <p>${inquilino.propietario_direccion}</p>
-          <p>${inquilino.propietario_localidad}</p>
+          <ul class="list-group">
+            <li class="list-group-item">${inquilino.propietario_nombre}</li>
+            <li class="list-group-item">${inquilino.propietario_direccion}</li>
+            <li class="list-group-item">${inquilino.propietario_localidad}</li>
+          </ul>
         </div>
-        <div class="col-4">
-          <h5 class="fw-bold">Otros Conceptos</h5>
-        </div>
+
         <div class="col-4">
           <h5 class="fw-bold">Inquilino</h5>
-          <p>${inquilino.nombre} ${inquilino.apellido}</p>
-          <p>Teléfono: ${inquilino.telefono}</p>
+          <ul class="list-group">
+            <li class="list-group-item">${inquilino.nombre} ${inquilino.apellido}</li>
+            <li class="list-group-item">Teléfono: ${inquilino.telefono}</li>
+          </ul>
+        </div>
+
+        <div class="col-4">
+          <h5 class="fw-bold">Otros Conceptos</h5>
+          <ul class="list-group">
+            <li class="list-group-item">Otros: ${inquilino.otros}</li>
+          </ul>
         </div>
       </div>
 
       <div class="row mb-3 border-top pt-3">
         <div class="col-4">
           <h5 class="fw-bold">Detalles del Alquiler</h5>
-          <p><strong>Periodo:</strong> ${inquilino.periodo}</p>
-          <p><strong>Contrato:</strong> ${inquilino.contrato}</p>
-          <p><strong>Aumento:</strong> ${inquilino.aumento}</p>
-          <p><strong>Estado:</strong> ${inquilino.alquileres_adeudados > 0 ? `${inquilino.alquileres_adeudados} meses adeudados` : 'Al día'}</p>
+          <ul class="list-group">
+            <li class="list-group-item"><strong>Periodo:</strong> ${inquilino.periodo}</li>
+            <li class="list-group-item"><strong>Contrato:</strong> ${inquilino.contrato}</li>
+            <li class="list-group-item"><strong>Aumento:</strong> ${inquilino.aumento}</li>
+            <li class="list-group-item"><strong>Estado:</strong> ${inquilino.alquileres_adeudados > 0 ? `${inquilino.alquileres_adeudados} meses adeudados` : 'Al día'}</li>
+          </ul>
         </div>
+
         <div class="col-4">
           <h5 class="fw-bold">Detalles de Liquidación</h5>
-          <p><strong>Alquileres:</strong> ${inquilino.alquileres_importe}</p>
-          <p><strong>Agua:</strong> ${inquilino.agua_importe}</p>
-          <p><strong>Tasa:</strong> ${inquilino.tasa_importe}</p>
-          <p><strong>Luz:</strong> ${inquilino.luz_importe}</p>
-          <p><strong>Otros:</strong> ${inquilino.otros}</p>
-          <p><strong>Total:</strong> ${inquilino.importe_total}</p>
+          <ul class="list-group">
+            <li class="list-group-item"><strong>Alquileres:</strong> ${inquilino.alquileres_importe}</li>
+            <li class="list-group-item"><strong>Otros:</strong> ${inquilino.otros}</li>
+          </ul>
+        </div>
+
+        <div class="col-4">
+          <h5 class="fw-bold">Impuestos</h5>
+          <ul class="list-group">
+            <li class="list-group-item"><strong>Agua:</strong> ${inquilino.agua_importe}</li>
+            <li class="list-group-item"><strong>Luz:</strong> ${inquilino.luz_importe}</li>
+            <li class="list-group-item"><strong>Tasa:</strong> ${inquilino.tasa_importe}</li>
+            <li class="list-group-item"><strong>Total:</strong> ${inquilino.importe_total}</li>
+          </ul>
         </div>
       </div>
 
       <!-- Firmas -->
-      <div class="row text-center mt-3">
+      <div class="row text-center mt-4" style="margin-top: 60px;">
         <div class="col-6">
-          <div class="linea"></div>
-          <p>Firma Inmobiliaria</p>
+          <div class="firma-digital" style="height: 80px;">
+            <!-- Aquí va la firma digital como imagen -->
+            <img src="${window.location.origin}/assets/img/firma_digital.png" alt="Firma Digital" style="max-height: 80px;" />
+          </div>
+         
+          <p class="mt-1">Firma Inmobiliaria</p>
         </div>
         <div class="col-6">
-          <div class="linea"></div>
-          <p>Firma del Inquilino</p>
+          <div class="linea" style="margin-top: 80px;"></div>
+          <p class="mt-1">Firma del Inquilino</p>
         </div>
       </div>
+
     </div>
   </div>
 </body>
 </html>
+
     `;
 
 
@@ -371,15 +428,21 @@ const InquilinosList = () => {
     <title>Recibos de Alquiler</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" />
     <style>
+     @page {
+            size: A4;
+            margin: 10mm;
+          }
       @media print {
         .page-break {
           page-break-after: always;
         }
+         
+
         .card {
           padding: 20px;
           border: 1px solid #000;
           max-width: 900px;
-          height: 600px;
+          height: auto;
           margin: 0 auto;
           padding-top: 50px;
         }
@@ -391,7 +454,7 @@ const InquilinosList = () => {
           width: 33.33%;
         }
         img.logo {
-          max-width: 80px;
+          max-width: 110px;
           height: auto;
         }
         h5, h6 {
@@ -399,10 +462,11 @@ const InquilinosList = () => {
           margin-bottom: 5px;
         }
         p {
-          font-size: 12px;
+          font-size: 18px;
           margin-bottom: 3px;
         }
       }
+        
       body {
         font-family: Arial, sans-serif;
         margin: 0;
@@ -412,7 +476,7 @@ const InquilinosList = () => {
         border-radius: 10px;
         border: 1px solid #000;
         max-width: 900px;
-        height: 600px;
+        height: auto;
         margin: 15px auto;
         padding-top: 50px;
       }
@@ -423,7 +487,7 @@ const InquilinosList = () => {
         margin-bottom: 10px;
       }
       .logo {
-        width: 100px;
+        width: 110px;
         height: auto;
       }
       .row {
@@ -434,14 +498,10 @@ const InquilinosList = () => {
         margin-bottom: 5px;
       }
       p {
-        font-size: 14px;
+        font-size: 18px;
         margin-bottom: 5px;
       }
-      .linea {
-        border-bottom: 1px solid #000;
-        height: 1rem;
-        margin-top: 10px;
-      }
+     
     </style>
   </head>
   <body>
@@ -450,9 +510,9 @@ const InquilinosList = () => {
     // Generar dos recibos por cada inquilino (original y copia)
     inquilinos.forEach((inquilino, index) => {
       content += `
-    <div class="container mt-5">
+    <div class="container">
       <!-- Primer recibo -->
-      <div class="card shadow-sm">
+      <div class="card">
         <!-- Cabecera -->
         <div class="row mb-3 header-row">
           <div class="col-4 text-left">
@@ -506,23 +566,28 @@ const InquilinosList = () => {
           </div>
         </div>
   
-        <!-- Firmas -->
-        <div class="row text-center mt-3">
+       <!-- Firmas -->
+        <div class="row text-center mt-4" style="margin-top: 60px;">
           <div class="col-6">
-            <div class="linea"></div>
-            <p>Firma Inmobiliaria</p>
+            <div class="firma-digital" style="height: 80px;">
+              <!-- Aquí va la firma digital como imagen -->
+              <img src="${window.location.origin}/assets/img/firma_digital.png" alt="Firma Digital" style="max-height: 80px;" />
+            </div>
+           
+            <p class="mt-1">Firma Inmobiliaria</p>
           </div>
           <div class="col-6">
-            <div class="linea"></div>
-            <p>Firma del Inquilino</p>
+            <div class="linea" style="margin-top: 80px;"></div>
+            <p class="mt-1">Firma del Inquilino</p>
           </div>
         </div>
+
       </div>
     </div>
   
-    <div class="container mt-5">
+    <div class="container">
       <!-- Segundo recibo (copia) -->
-      <div class="card shadow-sm">
+      <div class="card">
         <!-- Cabecera -->
         <div class="row mb-3 header-row">
           <div class="col-4 text-left">
@@ -576,17 +641,22 @@ const InquilinosList = () => {
           </div>
         </div>
   
-        <!-- Firmas -->
-        <div class="row text-center mt-3">
+       <!-- Firmas -->
+        <div class="row text-center mt-4" style="margin-top: 60px;">
           <div class="col-6">
-            <div class="linea"></div>
-            <p>Firma Inmobiliaria</p>
+            <div class="firma-digital" style="height: 80px;">
+              <!-- Aquí va la firma digital como imagen -->
+              <img src="${window.location.origin}/assets/img/firma_digital.png" alt="Firma Digital" style="max-height: 80px;" />
+            </div>
+           
+            <p class="mt-1">Firma Inmobiliaria</p>
           </div>
           <div class="col-6">
-            <div class="linea"></div>
-            <p>Firma del Inquilino</p>
+            <div class="linea" style="margin-top: 80px;"></div>
+            <p class="mt-1">Firma del Inquilino</p>
           </div>
         </div>
+
       </div>
     </div>
     
