@@ -7,6 +7,9 @@ const formatDate = (dateString) => {
 };
 
 const ModalInquilino = ({ selectedInquilino }) => {
+  console.log('Dentro de ModalInquilino - selectedInquilino:', selectedInquilino);
+  console.log('Dentro de ModalInquilino - importe_total:', selectedInquilino?.importe_total);
+ 
   if (!selectedInquilino) {
     return (
       <div className="modal-content p-3">
@@ -17,24 +20,41 @@ const ModalInquilino = ({ selectedInquilino }) => {
   }
 
   const camposRelevantes = [
-    'nombre', 
-    'apellido', 
-    'telefono', 
-    'direccion', 
-    'inicio_contrato', 
-    'periodo', 
-    'contrato', 
-    'aumento', 
-    'alquileres_adeudados', 
-    'gastos_adeudados'
+    'nombre',
+    'apellido',
+    'telefono',
+    'direccion',
+    'inicio_contrato',
+    'periodo',
+    'contrato',
+    'aumento',
+    'alquileres_adeudados',
+    'gastos_adeudados',
+    'alquileres_importe',
+    'agua_importe',
+    'luz_importe',
+    'tasa_importe',
+    'otros',
+    'importe_total'
   ];
 
   const formatValue = (key, value) => {
     if (key === 'inicio_contrato' && value) {
-      // Usar date-fns para formatear la fecha
       return formatDate(value);
     }
-    return value || 'N/A'; // Si no hay valor, mostrar 'N/A'
+
+    // Lista de campos numéricos a formatear
+    const numericFields = ['alquileres_importe', 'agua_importe', 'luz_importe', 'tasa_importe', 'otros', 'importe_total'];
+
+    if (numericFields.includes(key)) {
+      const numValue = parseFloat(value);
+      if (isNaN(numValue)) {
+        return 'N/A';
+      }
+      return Math.round(numValue); // O parseInt(numValue, 10)
+    }    
+
+    return value || 'N/A'; // Comportamiento por defecto
   };
 
   // Depuración

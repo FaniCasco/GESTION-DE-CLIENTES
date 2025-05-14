@@ -15,6 +15,8 @@ import ReactPaginate from 'react-paginate';
 Modal.setAppElement('#root');
 
 const InquilinosList = () => {
+  const numericFields = new Set(['alquileres_importe', 'agua_importe', 'luz_importe', 'tasa_importe', 'importe_total']);
+
   const { data: inquilinos, isLoading, isError, error, refetch } = useInquilinos();
   const [searchParams, setSearchParams] = useSearchParams();
   const searchTerm = searchParams.get('search') || '';
@@ -40,15 +42,27 @@ const InquilinosList = () => {
   };
 
   const handleViewClick = (inquilino) => {
-    setSelectedInquilino(inquilino);
-    reset(inquilino);
+    const formattedInquilino = { ...inquilino };
+    numericFields.forEach(field => {
+      if (formattedInquilino[field] !== undefined) {
+        formattedInquilino[field] = new Intl.NumberFormat('es-AR').format(formattedInquilino[field]);
+      }
+    });
+    setSelectedInquilino(formattedInquilino);
+    reset(formattedInquilino);
     setIsEditing(false);
     setViewModalOpen(true);
   };
 
   const handleEditClick = (inquilino) => {
-    setSelectedInquilino(inquilino);
-    reset(inquilino);
+    const formattedInquilino = { ...inquilino };
+    numericFields.forEach(field => {
+      if (formattedInquilino[field] !== undefined) {
+        formattedInquilino[field] = new Intl.NumberFormat('es-AR').format(formattedInquilino[field]);
+      }
+    });
+    setSelectedInquilino(formattedInquilino);
+    reset(formattedInquilino);
     setIsEditing(true);
     setViewModalOpen(true);
   };
@@ -94,11 +108,11 @@ const InquilinosList = () => {
   const onSubmit = async (data) => {
     setIsSubmitting(true);
     try {
-      const updatedInquilino = { ...selectedInquilino, ...data };
-      await fetch(`/api/inquilinos/${selectedInquilino.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedInquilino),
+      const parsedData = { ...data };
+      numericFields.forEach(field => {
+        if (parsedData[field] !== undefined && typeof parsedData[field] === 'string') {
+          parsedData[field] = Number(parsedData[field].replace(/\./g, ''));
+        }
       });
 
       refetch();
@@ -132,7 +146,7 @@ const InquilinosList = () => {
       receiptElement.style.background = 'white';
       receiptElement.style.boxSizing = 'border-box';
       receiptElement.style.padding = '10mm'; // Margen interno
-  
+
       // 2. HTML del recibo con estructura compacta
       receiptElement.innerHTML = `
       <!DOCTYPE html>
@@ -244,7 +258,7 @@ const InquilinosList = () => {
           <div class="section">
             <div class="section-title">Detalles de Liquidación</div>
             <div class="section-content">
-              Alquileres:<br>${inquilino.alquileres_importe}<br><br>
+              Alquileres:<br>${new Intl.NumberFormat('es-AR').format(inquilino.alquileres_importe)}<br><br>
               Otros:<br>${inquilino.otros || '0.00'}
             </div>
           </div>
@@ -253,10 +267,10 @@ const InquilinosList = () => {
           <div class="section">
             <div class="section-title">Impuestos</div>
             <div class="section-content">
-              Agua:<br>${inquilino.agua_importe}<br><br>
-              Luz:<br>${inquilino.luz_importe}<br><br>
-              Tasa:<br>${inquilino.tasa_importe}<br><br>
-              <div class="total">Total:<br>${inquilino.importe_total}</div>
+              Agua:<br>${new Intl.NumberFormat('es-AR').format(inquilino.agua_importe)}<br><br>
+              Luz:<br>${new Intl.NumberFormat('es-AR').format(inquilino.luz_importe)}<br><br>
+              Tasa:<br>${new Intl.NumberFormat('es-AR').format(inquilino.tasa_importe)}<br><br>
+              <div class="total">Total:<br>${new Intl.NumberFormat('es-AR').format(inquilino.importe_total)}</div>
             </div>
           </div>
   
@@ -275,13 +289,13 @@ const InquilinosList = () => {
       </body>
       </html>
       `;
-  
+
       document.body.appendChild(receiptElement);
-  
+
       // 3. Configuración optimizada para html2canvas
       const { jsPDF } = await import('jspdf');
       const html2canvas = await import('html2canvas');
-      
+
       const canvas = await html2canvas.default(receiptElement, {
         scale: 2,
         logging: false,
@@ -291,20 +305,20 @@ const InquilinosList = () => {
         scrollX: 0,
         scrollY: 0
       });
-  
+
       // 4. Generar PDF con proporciones correctas
       const pdf = new jsPDF('p', 'mm', 'a4');
       const imgData = canvas.toDataURL('image/png');
-      
+
       // Calcular dimensiones manteniendo aspecto
       const imgRatio = canvas.width / canvas.height;
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const targetHeight = pdfWidth / imgRatio;
-      
+
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, targetHeight);
-      
+
       pdf.save(`Recibo_${inquilino.apellido}.pdf`);
-  
+
       document.body.removeChild(receiptElement);
       Swal.fire('Éxito', 'Recibo generado correctamente', 'success');
     } catch (error) {
@@ -462,18 +476,18 @@ const InquilinosList = () => {
         <div class="col-4">
           <h5 class="fw-bold">Detalles de Liquidación</h5>
           <ul class="list-group">
-            <li class="list-group-item"><strong>Alquileres:</strong> ${inquilino.alquileres_importe}</li>
-            <li class="list-group-item"><strong>Otros:</strong> ${inquilino.otros}</li>
+              <li class="list-group-item"><strong>Alquileres:</strong> ${new Intl.NumberFormat('es-AR').format(inquilino.alquileres_importe)}</li>
+              <li class="list-group-item"><strong>Otros:</strong> ${inquilino.otros}</li>
           </ul>
         </div>
 
         <div class="col-4">
           <h5 class="fw-bold">Impuestos</h5>
           <ul class="list-group">
-            <li class="list-group-item"><strong>Agua:</strong> ${inquilino.agua_importe}</li>
-            <li class="list-group-item"><strong>Luz:</strong> ${inquilino.luz_importe}</li>
-            <li class="list-group-item"><strong>Tasa:</strong> ${inquilino.tasa_importe}</li>
-            <li class="list-group-item"><strong>Total:</strong> ${inquilino.importe_total}</li>
+            <li class="list-group-item"><strong>Agua:</strong> ${new Intl.NumberFormat('es-AR').format(inquilino.agua_importe)}</li>
+            <li class="list-group-item"><strong>Luz:</strong> ${new Intl.NumberFormat('es-AR').format(inquilino.luz_importe)}</li>
+            <li class="list-group-item"><strong>Tasa:</strong> ${new Intl.NumberFormat('es-AR').format(inquilino.tasa_importe)}</li>
+            <li class="list-group-item"><strong>Total:</strong> ${new Intl.NumberFormat('es-AR').format(inquilino.importe_total)}</li>
           </ul>
         </div>
       </div>
@@ -749,12 +763,11 @@ const InquilinosList = () => {
           </div>
           <div class="col-4">
             <h5 class="fw-bold">Detalles de Liquidación</h5>
-            <p><strong>Alquileres:</strong> ${inquilino.alquileres_importe}</p>
-            <p><strong>Agua:</strong> ${inquilino.agua_importe}</p>
-            <p><strong>Tasa:</strong> ${inquilino.tasa_importe}</p>
-            <p><strong>Luz:</strong> ${inquilino.luz_importe}</p>
-            <p><strong>Otros:</strong> ${inquilino.otros}</p>
-            <p><strong>Total:</strong> ${inquilino.importe_total}</p>
+            <p><strong>Alquileres:</strong> ${new Intl.NumberFormat('es-AR').format(inquilino.alquileres_importe)}</p>
+            <p><strong>Agua:</strong> ${new Intl.NumberFormat('es-AR').format(inquilino.agua_importe)}</p>
+            <p><strong>Tasa:</strong> ${new Intl.NumberFormat('es-AR').format(inquilino.tasa_importe)}</p>
+            <p><strong>Luz:</strong> ${new Intl.NumberFormat('es-AR').format(inquilino.luz_importe)}</p>
+            <p><strong>Total:</strong> ${new Intl.NumberFormat('es-AR').format(inquilino.importe_total)}</p>
           </div>
         </div>
   
@@ -891,14 +904,14 @@ https://postimg.cc/mPst7Kzn
   📊 Estado: ${inquilino.alquileres_adeudados > 0 ? `${inquilino.alquileres_adeudados} meses adeudados` : 'Al día'}
   
   *Detalles de Liquidación:*
-  💰 Alquileres: ${inquilino.alquileres_importe}
-  💧 Agua: ${inquilino.agua_importe}
-  📜 Tasa: ${inquilino.tasa_importe}
-  💡 Luz: ${inquilino.luz_importe}
+  💰 Alquileres: ${new Intl.NumberFormat('es-AR').format(inquilino.alquileres_importe)}
+  💧 Agua: ${new Intl.NumberFormat('es-AR').format(inquilino.agua_importe)}
+  📜 Tasa: ${new Intl.NumberFormat('es-AR').format(inquilino.tasa_importe)}
+  💡 Luz: ${new Intl.NumberFormat('es-AR').format(inquilino.luz_importe)}
   📦 Otros: ${inquilino.otros}
   
   *Total a Pagar:*
-  💵 ${inquilino.importe_total}
+  💵 ${new Intl.NumberFormat('es-AR').format(inquilino.importe_total)}
   
   Gracias por tu pago. 🎉
   
@@ -952,17 +965,6 @@ https://postimg.cc/mPst7Kzn
     <div className="container mt-4">
       <div className="p-3 mb-4 bg-agregar text-white rounded shadow">
         <h4 className="text-center mb-0">Lista de Inquilinos</h4>
-      </div>
-
-      <div className="mb-3 search-container">
-        <i className="bi bi-search search-icon"></i>
-        <input
-          type="text"
-          className="form-control"
-          placeholder="Buscar..."
-          value={searchTerm}
-          onChange={handleSearchChange}
-        />
       </div>
 
       <div className="d-flex justify-content-between mb-3">
@@ -1102,11 +1104,14 @@ https://postimg.cc/mPst7Kzn
           <form onSubmit={handleSubmit(onSubmit)}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
               {Object.keys(selectedInquilino).map((key) => {
-                if (key === 'importe_total') return null; // Evitamos que se oculte en el mapeo general
+                if (key === 'importe_total') return null;
 
+                // Formateo condicional de los valores
                 const value = key === 'inicio_contrato'
                   ? new Date(selectedInquilino[key]).toLocaleDateString('es-AR')
-                  : selectedInquilino[key];
+                  : !isEditing && numericFields.has(key)
+                    ? new Intl.NumberFormat('es-AR').format(selectedInquilino[key])
+                    : selectedInquilino[key];
                 return (
                   <div key={key}>
                     <label style={{ fontFamily: "'Poppins', sans-serif", fontWeight: '300', display: 'block', fontSize: '15px', marginBottom: '5px' }}>

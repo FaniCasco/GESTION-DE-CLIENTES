@@ -127,9 +127,15 @@
   color: white;
 }
 
-
-
-
+.btn-danger {
+  background-color: #c06b2c;
+  color: white;
+  font-weight: bold;
+}
+.btn-danger:hover {
+  background-color: #da1818;
+  color: white;
+}
 
 footer {
   background-color: #003366;
