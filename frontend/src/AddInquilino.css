@@ -13,3 +13,65 @@
   background-position: right calc(0.375em + 0.1875rem) center;
   background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
 }
+
+/* AddInquilino.css */
+.dark-theme-bg {
+  background-color: #121212 !important;
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+.dark-card {
+  background-color: #1e1e1e !important;
+  border: 1px solid #2d2d2d !important;
+  border-radius: 8px !important;
+}
+
+.dark-input {
+  background-color: #2d2d2d !important;
+  border: 1px solid #3d3d3d !important;
+  color: #e0e0e0 !important;
+}
+
+.dark-input:focus {
+  background-color: #373737 !important;
+  border-color: #4a6cd4 !important;
+  box-shadow: 0 0 0 3px rgba(76, 108, 212, 0.25) !important;
+}
+
+.dark-label {
+  color: #9e9e9e !important;
+  font-weight: 500 !important;
+}
+
+.dark-select {
+  background-color: #2d2d2d !important;
+  border: 1px solid #3d3d3d !important;
+  color: #e0e0e0 !important;
+}
+
+.dark-title {
+  color: #4a6cd4 !important;
+  border-bottom: 2px solid #2d2d2d;
+  padding-bottom: 0.5rem;
+}
+
+.dark-button {
+  background-color: #4a6cd4 !important;
+  border: none !important;
+  padding: 0.5rem 1.5rem !important;
+  transition: all 0.3s ease !important;
+}
+
+.dark-button:hover {
+  background-color: #5b7de5 !important;
+  transform: translateY(-1px);
+}
+
+/* Sobreescribir Bootstrap */
+.form-control.dark-input,
+.form-select.dark-select {
+  height: 45px;
+  padding: 0.5rem 1rem;
+}
+

@@ -1,12 +1,10 @@
-/*Este componente cumple la funcion de agregar un inquilino */
-
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
+import 'bootstrap/dist/css/bootstrap.min.css';
 import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
-// Asegúrate de tener estos estilos CSS de Bootstrap disponibles en tu proyecto
-import 'bootstrap/dist/css/bootstrap.min.css';
 import '../AddInquilino.css';
+
 
 
 const AddInquilino = () => {
@@ -48,10 +46,10 @@ const AddInquilino = () => {
     if (campo.type === 'select') {
       return (
         <div className="col-md-6 mb-3" key={campo.name}>
-          <label className="form-label" htmlFor={campo.name}>{campo.label}</label>
+          <label className="form-label dark-label" htmlFor={campo.name}>{campo.label}</label>
           <select
             id={campo.name}
-            className={`form-select ${errors[campo.name] ? 'is-invalid' : ''}`} // Usando form-select de Bootstrap
+            className={`form-select dark-select ${errors[campo.name] ? 'is-invalid' : ''}`} // Usando form-select de Bootstrap
             {...register(campo.name, campo.required ? { required: `${campo.label} es obligatorio` } : {})}
           >
             {campo.options.map(option => <option key={option} value={option}>{option}</option>)}
@@ -65,12 +63,12 @@ const AddInquilino = () => {
     if (campo.type === 'number' && campo.integer) {
       return (
         <div className="col-md-6 mb-3" key={campo.name}>
-          <label className="form-label" htmlFor={campo.name}>{campo.label}</label>
+          <label className="form-label dark-label" htmlFor={campo.name}>{campo.label}</label>
           <input
             id={campo.name}
             type="number"
             step="any"
-            className={`form-control ${errors[campo.name] ? 'is-invalid' : ''}`}
+            className={`form-control dark-input ${errors[campo.name] ? 'is-invalid' : ''}`}
             {...register(campo.name, {
               valueAsNumber: true,
               required: campo.required ? `${campo.label} es obligatorio` : false,
@@ -90,11 +88,11 @@ const AddInquilino = () => {
     if (campo.type === 'date') {
       return (
         <div className="col-md-6 mb-3" key={campo.name}>
-          <label className="form-label" htmlFor={campo.name}>{campo.label}</label>
+          <label className="form-label dark-label" htmlFor={campo.name}>{campo.label}</label>
           <input
             id={campo.name}
             type="date"
-            className={`form-control ${errors[campo.name] ? 'is-invalid' : ''}`}
+            className={`form-control dark-input ${errors[campo.name] ? 'is-invalid' : ''}`}
             aria-label={campo.label}
             {...register(campo.name, {
               required: campo.required ? { message: `${campo.label} es obligatorio` } : false,
@@ -110,11 +108,11 @@ const AddInquilino = () => {
 
     return (
       <div className="col-md-6 mb-3" key={campo.name}>
-        <label className="form-label" htmlFor={campo.name}>{campo.label}</label>
+        <label className="form-label dark-label" htmlFor={campo.name}>{campo.label}</label>
         <input
           id={campo.name}
           type={campo.type || 'text'}
-          className={`form-control ${errors[campo.name] ? 'is-invalid' : ''}`}
+          className={`form-control dark-input ${errors[campo.name] ? 'is-invalid' : ''}`}
           {...register(campo.name, {
             required: campo.required ? `${campo.label} es obligatorio` : false,
             pattern: campo.pattern ? {
@@ -138,11 +136,8 @@ const AddInquilino = () => {
         ...data,
         periodo: data.periodo.toString().trim(), // Convertir a string y limpiar
         aumento: data.aumento.toString().trim(),
-        // Convertir 'Sí'/'No' a 'si debe'/'no debe'
         alquileres_adeudados: data.alquileres_adeudados === 'Sí' ? 'si debe' : 'no debe',
         gastos_adeudados: data.gastos_adeudados === 'Sí' ? 'si debe' : 'no debe',
-        // Los campos numéricos ya se convierten por valueAsNumber: true en register,
-        // pero parseFloat(value) || 0 es un buen fallback si el campo estuviera vacío
         alquileres_importe: parseFloat(data.alquileres_importe) || 0,
         agua_importe: parseFloat(data.agua_importe) || 0,
         luz_importe: parseFloat(data.luz_importe) || 0,
@@ -184,38 +179,37 @@ const AddInquilino = () => {
     }
   };
 
-  return (
-    <div className="container mt-4"> {/* Usando clases de Bootstrap para centrar y dar margen */}
-      <div className="p-3 mb-4 bg-primary text-white rounded shadow"> {/* Estilo de encabezado Bootstrap */}
-        <h4 className="text-center mb-0">Agregar Nuevo Inquilino</h4>
-      </div>
-      <form className="p-4 border rounded bg-light" onSubmit={handleSubmit(onSubmit)}> {/* Estilo de formulario Bootstrap */}
 
-        <h5 className="mb-4 text-primary">Datos del Inquilino</h5>
-        <div className="row"> {/* Usando grid de Bootstrap */}
+  return (
+    <div className="dark-theme-bg">
+      <div className="dark-card p-4 mb-4">
+        <h4 className="text-center text-light mb-0">Agregar Nuevo Inquilino</h4>
+      </div>
+      
+      <form className="dark-card p-4" onSubmit={handleSubmit(onSubmit)}>
+        <h5 className="dark-title mb-4">Datos del Inquilino</h5>
+        <div className="row g-3">
           {renderCampos(camposInquilino)}
         </div>
 
-        <h5 className="mt-4 text-primary">Datos del Inmueble</h5>
-        <div className="row"> {/* Usando grid de Bootstrap */}
+        <h5 className="dark-title mt-5 mb-4">Datos del Inmueble</h5>
+        <div className="row g-3">
           {renderCampos(camposInmueble)}
         </div>
 
-        <h5 className="mt-4 text-primary">Detalle de Liquidaciones (Enteros)</h5>
-        <div className="row"> {/* Usando grid de Bootstrap */}
+        <h5 className="dark-title mt-5 mb-4">Detalle de Liquidaciones</h5>
+        <div className="row g-3">
           {renderCampos(camposLiquidacion)}
         </div>
 
-        <div className="d-flex justify-content-end mt-4"> {/* Botón al final */}
-          <button type="submit" className="btn btn-primary" disabled={isSubmitting}>
+        <div className="d-flex justify-content-end mt-5">
+          <button type="submit" className="btn dark-button" disabled={isSubmitting}>
             {isSubmitting ? (
               <>
-                <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                <span className="spinner-border spinner-border-sm me-2"></span>
                 Guardando...
               </>
-            ) : (
-              'Agregar Inquilino'
-            )}
+            ) : 'Agregar Inquilino'}
           </button>
         </div>
       </form>

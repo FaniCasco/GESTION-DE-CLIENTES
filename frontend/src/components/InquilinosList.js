@@ -1097,157 +1097,226 @@ https://postimg.cc/mPst7Kzn
         activeClassName={'active'}
       />
 
-      <Modal
-        isOpen={isViewModalOpen}
-        onRequestClose={() => setViewModalOpen(false)}
-        contentLabel="Ver/Editar Inquilino"
-        style={{
-          content: {
-            maxWidth: '800px',
-            margin: 'auto',
-            height: '85vh',
-            maxHeight: '85vh',
-            overflowY: 'auto',
-            background: '#2c2c2c',
-            color: '#ffffff',
-            borderRadius: '15px',
-            border: 'none',
-            boxShadow: '0px 8px 20px rgba(0, 0, 0, 0.6)',
-            padding: '20px',
-            animation: 'fadeIn 0.3s ease-in-out',
-          },
-          overlay: {
-            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-          },
-        }}
-      >
-        <h3 style={{ borderBottom: '2px solid #555', paddingBottom: '10px' }}>
-          {isEditing ? 'Editar Información del Inquilino' : 'Información del Inquilino'}
-        </h3>
+<Modal
+  isOpen={isViewModalOpen}
+  onRequestClose={() => setViewModalOpen(false)}
+  contentLabel="Ver/Editar Inquilino"
+  style={{
+    content: {
+      maxWidth: '800px',
+      margin: 'auto',
+      height: '85vh',
+      maxHeight: '85vh',
+      overflowY: 'auto',
+      background: '#333',
+      color: '#f0f0f0',
+      borderRadius: '12px',
+      border: 'none',
+      boxShadow: '0px 10px 30px rgba(0, 0, 0, 0.5)',
+      padding: '25px',
+      animation: 'fadeIn 0.3s ease-in-out',
+    },
+    overlay: {
+      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+      backdropFilter: 'blur(3px)',
+    },
+  }}
+>
+  <h3 style={{ 
+    borderBottom: '2px solid #444',
+    paddingBottom: '12px',
+    marginBottom: '25px',
+    fontSize: '1.4rem',
+    fontWeight: '500',
+    fontFamily: "'Poppins', sans-serif",
+    color: '#e0e0e0'
+  }}>
+    {isEditing ? 'Editar Información del Inquilino' : 'Información del Inquilino'}
+  </h3>
 
-        {selectedInquilino && (
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-              {Object.keys(selectedInquilino).map((key) => {
-                if (key === 'alquileres_adeudados' || key === 'gastos_adeudados') {
-                  return (
-                    <div key={key}>
-                      <label>{formatFieldName(key)}</label>
-                      <select
-                        {...register(key)}
-                        className="form-control"
-                        disabled={!isEditing}
-                        style={{ /* tus estilos */ }}
-                      >
-                        <option value="Sí">Sí</option>
-                        <option value="No">No</option>
-                      </select>
-                    </div>
-                  );
-                }
-                // Formateo condicional de los valores
-                const value = key === 'inicio_contrato'
-                  ? new Date(selectedInquilino[key]).toLocaleDateString('es-AR')
-                  : !isEditing && numericFields.has(key)
-                    ? new Intl.NumberFormat('es-AR').format(selectedInquilino[key])
-                    : selectedInquilino[key];
-                return (
-                  <div key={key}>
-                    <label style={{ fontFamily: "'Poppins', sans-serif", fontWeight: '300', display: 'block', fontSize: '15px', marginBottom: '5px' }}>
-                      {formatFieldName(key)}
-                    </label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      {...register(key)}
-                      defaultValue={value}
-                      readOnly={!isEditing}
-                      style={{
-                        background: isEditing ? '#f5f5dc' : '#2c2c2c',
-                        color: isEditing ? 'black' : 'white',
-                        border: '1px solid #555',
-                        borderRadius: '5px',
-                        fontSize: '15px',
-                        fontFamily: "'Poppins', sans-serif",
-                        fontWeight: '300',
-                        padding: '8px',
-                      }}
-                    />
-                  </div>
-                );
-              })}
-
-            </div>
-
-            <div className="d-flex justify-content-between mt-4">
-              {isEditing ? (
-                <>
-                  <button
-                    type="submit"
-                    className="btn btn-success"
-                    disabled={isSubmitting}
-                    style={{
-                      backgroundColor: '#28a745',
-                      borderColor: '#28a745',
-                      color: '#fff',
-                      fontSize: '15px',
-                      fontWeight: 'bold',
-                      padding: '8px 16px',
-                    }}
-                  >
-                    {isSubmitting ? 'Guardando...' : 'Guardar'}
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={() => setIsEditing(false)}
-                    style={{
-                      backgroundColor: '#6c757d',
-                      borderColor: '#6c757d',
-                      color: '#fff',
-                      fontSize: '15px',
-                      fontWeight: 'bold',
-                      padding: '8px 16px',
-                    }}
-                  >
-                    Cancelar
-                  </button>
-                </>
-              ) : (
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={() => setIsEditing(true)}
+  {selectedInquilino && (
+    <form onSubmit={handleSubmit(onSubmit)}>
+      <div style={{ 
+        display: 'grid', 
+        gridTemplateColumns: '1fr 1fr', 
+        gap: '20px',
+        marginBottom: '25px'
+      }}>
+        {Object.keys(selectedInquilino).map((key) => {
+          if (key === 'alquileres_adeudados' || key === 'gastos_adeudados') {
+            return (
+              <div key={key}>
+                <label style={{
+                  fontFamily: "'Poppins', sans-serif",
+                  fontWeight: '300',
+                  display: 'block',
+                  fontSize: '0.9rem',
+                  marginBottom: '8px',
+                  color: '#d0d0d0'
+                }}>
+                  {formatFieldName(key)}
+                </label>
+                <select
+                  {...register(key)}
+                  disabled={!isEditing}
                   style={{
-                    backgroundColor: '#007bff',
-                    borderColor: '#007bff',
-                    color: '#fff',
-                    fontSize: '15px',
-                    fontWeight: 'bold',
-                    padding: '8px 16px',
-                    width: '100px',
+                    background: isEditing ? '#f8f9fa' : '#404040',
+                    color: isEditing ? '#333' : '#f0f0f0',
+                    border: '1px solid #555',
+                    borderRadius: '6px',
+                    fontSize: '0.95rem',
+                    fontFamily: "'Poppins', sans-serif",
+                    fontWeight: '300',
+                    padding: '10px 12px',
+                    width: '100%',
+                    outline: 'none',
+                    appearance: 'none',
+                    backgroundImage: 'url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSIjZmZmZmZmIj48cGF0aCBkPSJNNyAxMGw1IDUgNS01eiIvPjwvc3ZnPg==")',
+                    backgroundRepeat: 'no-repeat',
+                    backgroundPosition: 'right 12px center',
+                    backgroundSize: '14px'
                   }}
                 >
-                  Editar
-                </button>
-              )}
-              <button
-                type="button"
-                className="btn btn-danger"
-                onClick={() => setViewModalOpen(false)}
+                  <option value="Sí">Sí</option>
+                  <option value="No">No</option>
+                </select>
+              </div>
+            );
+          }
+          
+          const value = key === 'inicio_contrato'
+            ? new Date(selectedInquilino[key]).toLocaleDateString('es-AR')
+            : !isEditing && numericFields.has(key)
+              ? new Intl.NumberFormat('es-AR').format(selectedInquilino[key])
+              : selectedInquilino[key];
+              
+          return (
+            <div key={key}>
+              <label style={{
+                fontFamily: "'Poppins', sans-serif",
+                fontWeight: '300',
+                display: 'block',
+                fontSize: '0.9rem',
+                marginBottom: '8px',
+                color: '#d0d0d0'
+              }}>
+                {formatFieldName(key)}
+              </label>
+              <input
+                type="text"
+                {...register(key)}
+                defaultValue={value}
+                readOnly={!isEditing}
                 style={{
-                  backgroundColor: '#dc3545',
-                  borderColor: '#dc3545',
-                  color: '#fff',
-                  fontWeight: 'bold',
+                  background: isEditing ? '#f8f9fa' : '#404040',
+                  color: isEditing ? '#333' : '#f0f0f0',
+                  border: '1px solid #555',
+                  borderRadius: '6px',
+                  fontSize: '0.95rem',
+                  fontFamily: "'Poppins', sans-serif",
+                  fontWeight: '300',
+                  padding: '10px 12px',
+                  width: '100%',
+                  outline: 'none',
+                  transition: 'all 0.2s ease'
                 }}
-              >
-                Cerrar
-              </button>
+              />
             </div>
-          </form>
+          );
+        })}
+      </div>
+
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'flex-end', 
+        gap: '15px',
+        marginTop: '25px',
+        borderTop: '1px solid #444',
+        paddingTop: '20px'
+      }}>
+        {isEditing ? (
+          <>
+            <button
+              type="button"
+              onClick={() => setIsEditing(false)}
+              style={{
+                background: 'linear-gradient(135deg, #666, #444)',
+                color: '#fff',
+                border: 'none',
+                padding: '10px 22px',
+                borderRadius: '6px',
+                fontFamily: "'Poppins', sans-serif",
+                fontWeight: '500',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                textTransform: 'uppercase'
+              }}
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              style={{
+                background: 'linear-gradient(135deg, #34c759, #248a3d)',
+                color: '#fff',
+                border: 'none',
+                padding: '10px 22px',
+                borderRadius: '6px',
+                fontFamily: "'Poppins', sans-serif",
+                fontWeight: '500',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                textTransform: 'uppercase'
+              }}
+            >
+              {isSubmitting ? 'Guardando...' : 'Guardar'}
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={() => setIsEditing(true)}
+              style={{
+                background: 'linear-gradient(135deg, #4a90e2, #2f6eb5)',
+                color: '#fff',
+                border: 'none',
+                padding: '10px 22px',
+                borderRadius: '6px',
+                fontFamily: "'Poppins', sans-serif",
+                fontWeight: '500',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                textTransform: 'uppercase'
+              }}
+            >
+              Editar
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewModalOpen(false)}
+              style={{
+                background: 'linear-gradient(135deg, #ff3b30, #cc2a22)',
+                color: '#fff',
+                border: 'none',
+                padding: '10px 22px',
+                borderRadius: '6px',
+                fontFamily: "'Poppins', sans-serif",
+                fontWeight: '500',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                textTransform: 'uppercase'
+              }}
+            >
+              Cerrar
+            </button>
+          </>
         )}
-      </Modal>
+      </div>
+    </form>
+  )}
+</Modal>
 
     </div>
   );

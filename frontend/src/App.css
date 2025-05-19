@@ -194,6 +194,10 @@ footer a:hover {
 .form-control {
   padding-left: 35px; /* Ajusta el valor según el tamaño del icono y el padding deseado */
 }
+
+
+
+
 @media print {
   .no-print {
     display: none !important;
@@ -206,3 +210,4 @@ footer a:hover {
     box-shadow: none;
   }
 }
+
