@@ -16,7 +16,6 @@ export const fetchInquilinos = createAsyncThunk(
   }
 );
 
-
 const inquilinosSlice = createSlice({
   name: 'inquilinos',
   initialState: {

@@ -39,30 +39,35 @@ const getAllInquilinos = async (req, res) => {
   }
 
   const query = `
-    SELECT 
-  id,
-  nombre,
-  apellido,
-  telefono,
-  TO_CHAR(inicio_contrato, 'DD/MM/YYYY') AS inicio_contrato,
-  periodo,
-  contrato,
-  aumento,
-  propietario_nombre,
-  propietario_direccion,
-  propietario_localidad,
-  alquileres_adeudados,
-  gastos_adeudados,
-  ROUND(alquileres_importe) AS alquileres_importe, 
-  ROUND(agua_importe) AS agua_importe,             
-  ROUND(luz_importe) AS luz_importe,               
-  ROUND(tasa_importe) AS tasa_importe,             
-  ROUND(otros) AS otros,                           
-  ROUND(importe_total) AS importe_total            
-FROM inquilinos
-
-    ${filters.length ? `WHERE ${filters.join(' AND ')}` : ''}
-  `;
+  SELECT 
+    id,
+    nombre,
+    apellido,
+    telefono,
+    TO_CHAR(inicio_contrato, 'DD/MM/YYYY') AS inicio_contrato,
+    periodo,
+    contrato,
+    aumento,
+    propietario_nombre,
+    propietario_direccion,
+    propietario_localidad,
+    CASE 
+      WHEN alquileres_adeudados = 'si debe' THEN 'Sí'
+      ELSE 'No' 
+    END as alquileres_adeudados,
+    CASE 
+      WHEN gastos_adeudados = 'si debe' THEN 'Sí'
+      ELSE 'No' 
+    END as gastos_adeudados,
+    ROUND(alquileres_importe) AS alquileres_importe,
+    ROUND(agua_importe) AS agua_importe,
+    ROUND(luz_importe) AS luz_importe,
+    ROUND(tasa_importe) AS tasa_importe,
+    ROUND(otros) AS otros,
+    ROUND(importe_total) AS importe_total
+  FROM inquilinos
+  ${filters.length ? `WHERE ${filters.join(' AND ')}` : ''};
+`;
 
   try {
     const result = await pool.query(query, values);
@@ -78,29 +83,35 @@ const getInquilinoById = async (req, res) => {
   const { id } = req.params;
   try {
     const query = `
-      SELECT 
-        id,
-        nombre,
-        apellido,
-        telefono,
-        TO_CHAR(inicio_contrato, 'DD/MM/YYYY') AS inicio_contrato, -- Formatear la fecha
-        periodo,
-        contrato,
-        aumento,
-        propietario_nombre,
-        propietario_direccion,
-        propietario_localidad,
-        alquileres_adeudados,
-        gastos_adeudados,
-        alquileres_importe,
-        agua_importe,
-        luz_importe,
-        tasa_importe,
-        otros,
-        importe_total
-      FROM inquilinos
-      WHERE id = $1;
-    `;
+  SELECT 
+    id,
+    nombre,
+    apellido,
+    telefono,
+    TO_CHAR(inicio_contrato, 'DD/MM/YYYY') AS inicio_contrato,
+    periodo::TEXT,
+    contrato,
+    aumento::TEXT,
+    propietario_nombre,
+    propietario_direccion,
+    propietario_localidad,
+    CASE 
+      WHEN alquileres_adeudados = 'si debe' THEN 'Sí'
+      ELSE 'No' 
+    END as alquileres_adeudados,
+    CASE 
+      WHEN gastos_adeudados = 'si debe' THEN 'Sí'
+      ELSE 'No' 
+    END as gastos_adeudados,
+    alquileres_importe,
+    agua_importe,
+    luz_importe,
+    tasa_importe,
+    otros,
+    importe_total
+  FROM inquilinos
+  WHERE id = $1;
+`;
 
     const result = await pool.query(query, [id]);
     if (result.rows.length === 0) {
@@ -127,13 +138,15 @@ const addInquilino = async (req, res) => {
     !propietario_nombre || !propietario_direccion || !propietario_localidad) {
     return res.status(400).json({ message: "Faltan datos obligatorios." });
   }
+  // Cambiá la validación en addInquilino y updateInquilino así:
+  if (!['si debe', 'no debe'].includes(alquileres_adeudados) || !['si debe', 'no debe'].includes(gastos_adeudados)) {
+    return res.status(400).json({
+      message: "Valores inválidos para campos de deuda. Use 'si debe' o 'no debe'"
+    });
+  }
 
-  // Convertir la fecha al formato ISO (esto ya lo tienes y está bien si frontend envía algo parseable por new Date)
-  // Si el frontend envía dd/mm/yyyy, new Date(fechaString) podría necesitar parseo manual o librerías si la string no es estándar ISO.
-  // TU FRONTEND YA HACE EL PARSEO DE DD/MM/YYYY a Date.toISOString() ANTES DE ENVIAR, así que ESTO ESTÁ BIEN.
+
   const fechaISO = inicio_contrato ? new Date(inicio_contrato).toISOString() : null;
-
-
   // --- Aplicar la nueva función de parseo a los campos numéricos ---
   const alquileres_importe_parsed = parseNumericField(alquileres_importe);
   const agua_importe_parsed = parseNumericField(agua_importe);
@@ -142,8 +155,7 @@ const addInquilino = async (req, res) => {
   const otros_parsed = parseNumericField(otros); // Asegúrate que 'otros' SIEMPRE es numérico o null/vacío si lo parseas así
   const importe_total_parsed = parseNumericField(importe_total);
   // Agrega periodo y aumento si también necesitan este parseo en backend (tu frontend los trata así)
-  const periodo_parsed = parseNumericField(periodo);
-  const aumento_parsed = parseNumericField(aumento);
+
 
 
   try {
@@ -157,13 +169,39 @@ const addInquilino = async (req, res) => {
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
       RETURNING *;
     `;
+    const normalizeDeuda = (value) => {
+      if (value === 'Sí' || value === 'si debe') return 'si debe';
+      if (value === 'No' || value === 'no debe') return 'no debe';
+      return null;
+    };
 
+    const transformedAlquileres = normalizeDeuda(alquileres_adeudados);
+    const transformedGastos = normalizeDeuda(gastos_adeudados);
+
+    if (!transformedAlquileres || !transformedGastos) {
+      return res.status(400).json({
+        message: "Valores inválidos para campos de deuda."
+      });
+    }
     const values = [
-      nombre, apellido, telefono, fechaISO, periodo_parsed, contrato, aumento_parsed, // <-- Usar variables parseadas
-      propietario_nombre, propietario_direccion, propietario_localidad,
-      alquileres_adeudados, gastos_adeudados, alquileres_importe_parsed, // <-- Usar variables parseadas
-      agua_importe_parsed, luz_importe_parsed, tasa_importe_parsed, otros_parsed,
-      importe_total_parsed, // <-- Usar variables parseadas
+      nombre,
+      apellido,
+      telefono,
+      fechaISO,
+      periodo,
+      contrato,
+      aumento,
+      propietario_nombre,
+      propietario_direccion,
+      propietario_localidad,
+      transformedAlquileres, // <--- Aquí
+      transformedGastos,     // <--- Aquí
+      alquileres_importe_parsed,
+      agua_importe_parsed,
+      luz_importe_parsed,
+      tasa_importe_parsed,
+      otros_parsed,
+      importe_total_parsed
     ];
 
     const result = await pool.query(query, values);
@@ -185,6 +223,11 @@ const updateInquilino = async (req, res) => {
     alquileres_importe, agua_importe, luz_importe, tasa_importe, otros, importe_total, // <-- Ahora son strings o null/undefined
   } = req.body;
 
+  if (!['Sí', 'No'].includes(alquileres_adeudados) || !['Sí', 'No'].includes(gastos_adeudados)) {
+    return res.status(400).json({
+      message: "Valores inválidos para campos de deuda. Use 'Sí' o 'No'"
+    });
+  }
   // --- Aplicar la nueva función de parseo a los campos numéricos ---
   // (Similar a addInquilino)
   const alquileres_importe_parsed = parseNumericField(alquileres_importe);
@@ -193,17 +236,9 @@ const updateInquilino = async (req, res) => {
   const tasa_importe_parsed = parseNumericField(tasa_importe);
   const otros_parsed = parseNumericField(otros);
   const importe_total_parsed = parseNumericField(importe_total);
-  const periodo_parsed = parseNumericField(periodo);
-  const aumento_parsed = parseNumericField(aumento);
-
-  // TU FRONTEND YA HACE EL PARSEO DE DD/MM/YYYY a Date.toISOString() ANTES DE ENVIAR inicio_contrato,
-  // así que inicio_contrato ya debería venir en un formato ISO o parseable por new Date().
-  // Si el frontend envía null, undefined o '', puedes dejarlo así para que parseNumericField (o una verificación similar) lo maneje.
-  // Si necesitas asegurarte de que sea una fecha válida ISO o null:
-   const fechaISO = inicio_contrato ? new Date(inicio_contrato).toISOString() : null;
-   // NOTA: Si el frontend envía ya un string ISO, `new Date(inicio_contrato).toISOString()` es redundante pero inofensivo si la string es válida.
-   // Si el frontend envía DD/MM/YYYY, el frontend debe parsearlo antes de enviar. El frontend que te pasé ya hace esto.
-
+  const fechaISO = inicio_contrato ? new Date(inicio_contrato).toISOString() : null;
+  const transformedAlquileres = alquileres_adeudados === 'Sí' ? 'si debe' : 'no debe';
+  const transformedGastos = gastos_adeudados === 'Sí' ? 'si debe' : 'no debe';
 
   try {
     const query = `
@@ -218,13 +253,25 @@ const updateInquilino = async (req, res) => {
     `;
 
     const values = [
-      nombre, apellido, telefono, fechaISO, // <-- Usar fechaISO parseada/validada
-      periodo_parsed, contrato, aumento_parsed, // <-- Usar variables parseadas
-      propietario_nombre, propietario_direccion, propietario_localidad,
-      alquileres_adeudados, gastos_adeudados,
-      alquileres_importe_parsed, agua_importe_parsed, luz_importe_parsed, tasa_importe_parsed, // <-- Usar variables parseadas
-      otros_parsed, importe_total_parsed, // <-- Usar variables parseadas
-      id // El ID siempre va al final en esta query
+      nombre,
+      apellido,
+      telefono,
+      fechaISO,
+      periodo,
+      contrato,
+      aumento,
+      propietario_nombre,
+      propietario_direccion,
+      propietario_localidad,
+      transformedAlquileres,
+      transformedGastos,
+      alquileres_importe_parsed,
+      agua_importe_parsed,
+      luz_importe_parsed,
+      tasa_importe_parsed,
+      otros_parsed,
+      importe_total_parsed,
+      id
     ];
 
     const result = await pool.query(query, values);

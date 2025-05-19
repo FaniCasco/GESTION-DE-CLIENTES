@@ -7,46 +7,16 @@ CLIENTES
             └── 📁img
                 └── logo.png
         └── 📁fonts
-            └── 📁Karla
-               
-            └── 📁Poppins
-              
-            └── 📁Silkscreen
-               
-            └── 📁Slackey
-                
-            └── 📁Sour_Gummy
-               
+                         
              
         └── index.html
-        └── 📁static
-            └── 📁css
-                └── main.4e6f96b6.css
-                └── main.4e6f96b6.css.map
-            └── 📁js
-                └── main.015b53b0.js
-                └── main.015b53b0.js.LICENSE.txt
-                └── main.015b53b0.js.map
-            └── 📁media
-                └── bootstrap-icons.39795c0b4513de014cf8.woff
-                └── bootstrap-icons.b7bcc075b395c14ce8c2.woff2
-                └── logo.cfa1be89e176173a9656.png
-                └── Poppins-Medium.673ed42382ab264e0bf5.ttf
+      
     └── 📁public
         └── 📁assets
             └── favicon.ico
             └── 📁img
                 └── logo.png
         └── 📁fonts
-            └── 📁Karla
-                
-            └── 📁Poppins
-             
-            └── 📁Silkscreen
-               
-            └── 📁Slackey
-                
-            └── 📁Sour_Gummy
                 
         └── index.html
     └── 📁src

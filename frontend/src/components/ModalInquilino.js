@@ -9,7 +9,7 @@ const formatDate = (dateString) => {
 const ModalInquilino = ({ selectedInquilino }) => {
   console.log('Dentro de ModalInquilino - selectedInquilino:', selectedInquilino);
   console.log('Dentro de ModalInquilino - importe_total:', selectedInquilino?.importe_total);
- 
+
   if (!selectedInquilino) {
     return (
       <div className="modal-content p-3">
@@ -43,18 +43,18 @@ const ModalInquilino = ({ selectedInquilino }) => {
       return formatDate(value);
     }
 
-    // Lista de campos numéricos a formatear
-    const numericFields = ['alquileres_importe', 'agua_importe', 'luz_importe', 'tasa_importe', 'otros', 'importe_total'];
+    // Campos numéricos expandidos
+    const numericFields = [
+      'alquileres_importe', 'agua_importe', 'luz_importe',
+      'tasa_importe', 'otros', 'importe_total'
+    ];
 
     if (numericFields.includes(key)) {
-      const numValue = parseFloat(value);
-      if (isNaN(numValue)) {
-        return 'N/A';
-      }
-      return Math.round(numValue); // O parseInt(numValue, 10)
-    }    
+      const numValue = parseFloat(value?.toString().replace(/\./g, ''));
+      return isNaN(numValue) ? 'N/A' : numValue.toLocaleString('es-AR');
+    }
 
-    return value || 'N/A'; // Comportamiento por defecto
+    return value || 'N/A';
   };
 
   // Depuración

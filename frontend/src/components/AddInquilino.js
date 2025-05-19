@@ -6,6 +6,7 @@ import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
 // Asegúrate de tener estos estilos CSS de Bootstrap disponibles en tu proyecto
 import 'bootstrap/dist/css/bootstrap.min.css';
+import '../AddInquilino.css';
 
 
 const AddInquilino = () => {
@@ -17,10 +18,10 @@ const AddInquilino = () => {
     { label: 'Nombre', name: 'nombre', required: true },
     { label: 'Apellido', name: 'apellido', required: true },
     { label: 'Teléfono', name: 'telefono', required: true, pattern: /^\d+$/, message: "El teléfono solo debe contener números" },
-    { label: 'Periodo', name: 'periodo', required: true },
     { label: 'Contrato', name: 'contrato', required: true },
     { label: 'Inicio del Contrato', name: 'inicio_contrato', required: true, type: 'date' },
-    { label: 'Aumento', name: 'aumento', required: true },
+    { label: 'Periodo', name: 'periodo', required: true, type: 'text', pattern: /^[a-zA-Z0-9% ]+$/, message: "Ejemplos válidos: 'Mensual', 'Trimestral', '5% anual'" },
+    { label: 'Aumento', name: 'aumento', required: true, type: 'text', pattern: /^[a-zA-Z0-9% ]+$/, message: "Ejemplo válido: '10% semestral'" },
   ];
 
   const camposInmueble = [
@@ -36,7 +37,7 @@ const AddInquilino = () => {
     { label: 'Alquileres', name: 'alquileres_importe', type: 'number', integer: true },
     { label: 'Agua', name: 'agua_importe', type: 'number', integer: true },
     { label: 'Tasa', name: 'tasa_importe', type: 'number', integer: true },
-    { label: 'Otros', name: 'otros', type: 'number', integer: true },
+    { label: 'Otros', name: 'otros', type: 'text', integer: true },
     { label: 'Luz', name: 'luz_importe', type: 'number', integer: true },
     { label: 'Importe Total', name: 'importe_total', type: 'number', integer: true },
   ];
@@ -68,19 +69,18 @@ const AddInquilino = () => {
           <input
             id={campo.name}
             type="number"
-            step="1" // Configurado para aceptar solo pasos de 1 (enteros)
+            step="any"
             className={`form-control ${errors[campo.name] ? 'is-invalid' : ''}`}
-            aria-label={campo.label}
             {...register(campo.name, {
-              required: campo.required ? { message: `${campo.label} es obligatorio` } : false,
-              // Patrón para asegurar que sea un número entero positivo (opcional, type="number" + step="1" ya ayuda)
-              pattern: {
-                value: /^\d+$/,
-                message: `${campo.label} debe ser un número entero positivo`,
-              },
-              valueAsNumber: true // Convierte automáticamente el input a número
+              valueAsNumber: true,
+              required: campo.required ? `${campo.label} es obligatorio` : false,
+              validate: (value) =>
+                value === undefined || isNaN(value)
+                  ? 'Debe ser un número válido'
+                  : true,
             })}
           />
+
           {errors[campo.name] && <span className="text-danger">{errors[campo.name].message}</span>}
         </div>
       );
@@ -107,6 +107,7 @@ const AddInquilino = () => {
 
 
     // Renderizar campos de texto por defecto
+
     return (
       <div className="col-md-6 mb-3" key={campo.name}>
         <label className="form-label" htmlFor={campo.name}>{campo.label}</label>
@@ -114,17 +115,20 @@ const AddInquilino = () => {
           id={campo.name}
           type={campo.type || 'text'}
           className={`form-control ${errors[campo.name] ? 'is-invalid' : ''}`}
-          aria-label={campo.label}
           {...register(campo.name, {
-            required: campo.required ? { message: `${campo.label} es obligatorio` } : false,
-            pattern: campo.pattern ? { value: campo.pattern, message: campo.message } : undefined,
+            required: campo.required ? `${campo.label} es obligatorio` : false,
+            pattern: campo.pattern ? {
+              value: campo.pattern,
+              message: campo.message // Mensaje personalizado
+            } : undefined
           })}
         />
-        {errors[campo.name] && <span className="text-danger">{errors[campo.name].message}</span>}
+        {errors[campo.name] && (
+          <span className="text-danger">{errors[campo.name].message}</span>
+        )}
       </div>
     );
   });
-
 
   const onSubmit = async (data) => {
     setIsSubmitting(true);
@@ -132,6 +136,8 @@ const AddInquilino = () => {
       // Formatear datos para enviar al backend
       const formattedData = {
         ...data,
+        periodo: data.periodo.toString().trim(), // Convertir a string y limpiar
+        aumento: data.aumento.toString().trim(),
         // Convertir 'Sí'/'No' a 'si debe'/'no debe'
         alquileres_adeudados: data.alquileres_adeudados === 'Sí' ? 'si debe' : 'no debe',
         gastos_adeudados: data.gastos_adeudados === 'Sí' ? 'si debe' : 'no debe',
@@ -218,6 +224,20 @@ const AddInquilino = () => {
 };
 
 export default AddInquilino;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

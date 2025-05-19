@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import api from '../api/api';
 import { useSearchParams } from 'react-router-dom';
 import { useInquilinos } from '../features/inquilinos/useInquilinos';
 import Modal from 'react-modal';
@@ -15,8 +16,10 @@ import ReactPaginate from 'react-paginate';
 Modal.setAppElement('#root');
 
 const InquilinosList = () => {
-  const numericFields = new Set(['alquileres_importe', 'agua_importe', 'luz_importe', 'tasa_importe', 'importe_total']);
-
+  const numericFields = new Set([
+    'alquileres_importe', 'agua_importe', 'luz_importe',
+    'tasa_importe', 'importe_total', 'otros'
+  ]);
   const { data: inquilinos, isLoading, isError, error, refetch } = useInquilinos();
   const [searchParams, setSearchParams] = useSearchParams();
   const searchTerm = searchParams.get('search') || '';
@@ -81,7 +84,8 @@ const InquilinosList = () => {
 
     if (result.isConfirmed) {
       try {
-        const response = await fetch(`/api/inquilinos/${id}`, { method: 'DELETE' });
+        const response = await api.delete(`/inquilinos/${id}`);
+
         if (!response.ok) throw new Error('Error al eliminar el inquilino');
 
         await Swal.fire({
@@ -115,16 +119,29 @@ const InquilinosList = () => {
         }
       });
 
+      // 2. Reemplaza el fetch por la llamada con api
+      // eslint-disable-next-line no-unused-vars
+      const response = await api.put(`/inquilinos/${selectedInquilino.id}`, parsedData); // <--- Modificar esta línea
+
+      // 3. Elimina estas líneas innecesarias:
+      // if (!response.ok) throw new Error('Error al actualizar');
+
+      await Swal.fire('Éxito', 'Datos actualizados correctamente', 'success');
+
       refetch();
       setIsEditing(false);
       setViewModalOpen(false);
       reset();
+
     } catch (error) {
-      console.error('Error al actualizar los datos del inquilino', error);
+      // 4. Mejora el manejo de errores
+      const errorMessage = error.response?.data?.message || error.message;
+      Swal.fire('Error', errorMessage, 'error');
     } finally {
       setIsSubmitting(false);
     }
   };
+
 
   const preloadImage = (url) => {
     return new Promise((resolve, reject) => {
@@ -259,7 +276,8 @@ const InquilinosList = () => {
             <div class="section-title">Detalles de Liquidación</div>
             <div class="section-content">
               Alquileres:<br>${new Intl.NumberFormat('es-AR').format(inquilino.alquileres_importe)}<br><br>
-              Otros:<br>${inquilino.otros || '0.00'}
+              Otros:<br>${new Intl.NumberFormat('es-AR').format(inquilino.otros || 0)}
+
             </div>
           </div>
   
@@ -908,7 +926,8 @@ https://postimg.cc/mPst7Kzn
   💧 Agua: ${new Intl.NumberFormat('es-AR').format(inquilino.agua_importe)}
   📜 Tasa: ${new Intl.NumberFormat('es-AR').format(inquilino.tasa_importe)}
   💡 Luz: ${new Intl.NumberFormat('es-AR').format(inquilino.luz_importe)}
-  📦 Otros: ${inquilino.otros}
+  📦 Otros:${new Intl.NumberFormat('es-AR').format(inquilino.otros)}
+
   
   *Total a Pagar:*
   💵 ${new Intl.NumberFormat('es-AR').format(inquilino.importe_total)}
@@ -933,12 +952,13 @@ https://postimg.cc/mPst7Kzn
   const filteredInquilinos = inquilinos?.filter((inquilino) => {
     const searchLower = searchTerm.toLowerCase();
 
-    const matchId = inquilino.id.toString().includes(searchTerm);
-    const matchNombre = inquilino.nombre.toLowerCase().includes(searchLower);
-    const matchApellido = inquilino.apellido.toLowerCase().includes(searchLower);
-    const matchPropietario = inquilino.propietario_nombre?.toLowerCase().includes(searchLower);
-    const matchAlquileres = inquilino.alquileres_adeudados?.toString().includes(searchLower);
-    const matchGastos = inquilino.gastos_adeudados?.toString().includes(searchLower);
+    // Manejo seguro con optional chaining y valores por defecto
+    const matchId = inquilino.id?.toString().includes(searchTerm) || false;
+    const matchNombre = (inquilino.nombre?.toLowerCase() || '').includes(searchLower);
+    const matchApellido = (inquilino.apellido?.toLowerCase() || '').includes(searchLower);
+    const matchPropietario = (inquilino.propietario_nombre?.toLowerCase() || '').includes(searchLower);
+    const matchAlquileres = (inquilino.alquileres_adeudados?.toString().toLowerCase() || '').includes(searchLower);
+    const matchGastos = (inquilino.gastos_adeudados?.toString().toLowerCase() || '').includes(searchLower);
 
     return (
       matchId ||
@@ -948,7 +968,12 @@ https://postimg.cc/mPst7Kzn
       matchAlquileres ||
       matchGastos
     );
-  }).sort((a, b) => a.apellido.localeCompare(b.apellido));
+  })?.sort((a, b) => {
+    // Ordenación segura si apellido es null/undefined
+    const apellidoA = a.apellido?.toLowerCase() || '';
+    const apellidoB = b.apellido?.toLowerCase() || '';
+    return apellidoA.localeCompare(apellidoB);
+  }) || [];
 
   const indexOfLastInquilino = (currentPage + 1) * inquilinosPerPage;
   const indexOfFirstInquilino = currentPage * inquilinosPerPage;
@@ -1104,8 +1129,22 @@ https://postimg.cc/mPst7Kzn
           <form onSubmit={handleSubmit(onSubmit)}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
               {Object.keys(selectedInquilino).map((key) => {
-                if (key === 'importe_total') return null;
-
+                if (key === 'alquileres_adeudados' || key === 'gastos_adeudados') {
+                  return (
+                    <div key={key}>
+                      <label>{formatFieldName(key)}</label>
+                      <select
+                        {...register(key)}
+                        className="form-control"
+                        disabled={!isEditing}
+                        style={{ /* tus estilos */ }}
+                      >
+                        <option value="Sí">Sí</option>
+                        <option value="No">No</option>
+                      </select>
+                    </div>
+                  );
+                }
                 // Formateo condicional de los valores
                 const value = key === 'inicio_contrato'
                   ? new Date(selectedInquilino[key]).toLocaleDateString('es-AR')
