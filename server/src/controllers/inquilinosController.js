@@ -3,7 +3,31 @@ const PDFMake = require('pdfmake'); // Importar correctamente pdfmake
 const fs = require('fs');
 const path = require('path');
 
+const safeDateToISO = (dateString) => {
+  if (!dateString) return null;
 
+  try {
+    // Si ya es una fecha ISO válida, retornarla directamente
+    if (dateString.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/)) {
+      return dateString;
+    }
+
+    // Manejar formato DD/MM/YYYY
+    if (dateString.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+      const [day, month, year] = dateString.split('/');
+      return new Date(`${year}-${month}-${day}`).toISOString();
+    }
+
+    // Intentar parsear como fecha
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return null;
+
+    return date.toISOString();
+  } catch (error) {
+    console.error("Error al convertir fecha:", error);
+    return null;
+  }
+};
 const parseNumericField = (value) => {
   // Si el valor es null, undefined, o cadena vacía, lo guardamos como null en la DB.
   if (value === null || value === undefined || value === '') {
@@ -45,6 +69,7 @@ const getAllInquilinos = async (req, res) => {
     apellido,
     telefono,
     TO_CHAR(inicio_contrato, 'DD/MM/YYYY') AS inicio_contrato,
+    TO_CHAR(vencimiento_contrato, 'DD/MM/YYYY') AS vencimiento_contrato,
     periodo,
     contrato,
     aumento,
@@ -89,6 +114,7 @@ const getInquilinoById = async (req, res) => {
     apellido,
     telefono,
     TO_CHAR(inicio_contrato, 'DD/MM/YYYY') AS inicio_contrato,
+    TO_CHAR(vencimiento_contrato, 'DD/MM/YYYY') AS vencimiento_contrato,
     periodo::TEXT,
     contrato,
     aumento::TEXT,
@@ -127,14 +153,13 @@ const getInquilinoById = async (req, res) => {
 
 const addInquilino = async (req, res) => {
   const {
-    nombre, apellido, telefono, inicio_contrato, periodo, contrato,
+    nombre, apellido, telefono, inicio_contrato, vencimiento_contrato, periodo, contrato,
     aumento, propietario_nombre, propietario_direccion, propietario_localidad,
     alquileres_adeudados, gastos_adeudados,
-    // Recibimos estos como string desde el frontend
     alquileres_importe, agua_importe, luz_importe, tasa_importe, otros, importe_total, // <-- Ahora son strings o null/undefined
   } = req.body;
 
-  if (!nombre || !apellido || !telefono || !inicio_contrato || !periodo || !contrato ||
+  if (!nombre || !apellido || !telefono || !inicio_contrato || !vencimiento_contrato || !periodo || !contrato ||
     !propietario_nombre || !propietario_direccion || !propietario_localidad) {
     return res.status(400).json({ message: "Faltan datos obligatorios." });
   }
@@ -146,22 +171,18 @@ const addInquilino = async (req, res) => {
   }
 
 
-  const fechaISO = inicio_contrato ? new Date(inicio_contrato).toISOString() : null;
-  // --- Aplicar la nueva función de parseo a los campos numéricos ---
+  const inicio_contratoISO = safeDateToISO(inicio_contrato);
+  const vencimiento_contratoISO = safeDateToISO(vencimiento_contrato);
   const alquileres_importe_parsed = parseNumericField(alquileres_importe);
   const agua_importe_parsed = parseNumericField(agua_importe);
   const luz_importe_parsed = parseNumericField(luz_importe);
   const tasa_importe_parsed = parseNumericField(tasa_importe);
   const otros_parsed = parseNumericField(otros); // Asegúrate que 'otros' SIEMPRE es numérico o null/vacío si lo parseas así
   const importe_total_parsed = parseNumericField(importe_total);
-  // Agrega periodo y aumento si también necesitan este parseo en backend (tu frontend los trata así)
-
-
-
   try {
     const query = `
       INSERT INTO inquilinos (
-        nombre, apellido, telefono, inicio_contrato, periodo, contrato, aumento,
+        nombre, apellido, telefono, inicio_contrato, vencimiento_contrato, periodo, contrato, aumento,
         propietario_nombre, propietario_direccion, propietario_localidad,
         alquileres_adeudados, gastos_adeudados, alquileres_importe,
         agua_importe, luz_importe, tasa_importe, otros, importe_total
@@ -169,6 +190,7 @@ const addInquilino = async (req, res) => {
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
       RETURNING *;
     `;
+
     const normalizeDeuda = (value) => {
       if (value === 'Sí' || value === 'si debe') return 'si debe';
       if (value === 'No' || value === 'no debe') return 'no debe';
@@ -187,22 +209,25 @@ const addInquilino = async (req, res) => {
       nombre,
       apellido,
       telefono,
-      fechaISO,
+      inicio_contratoISO,
+      vencimiento_contratoISO,
       periodo,
       contrato,
       aumento,
       propietario_nombre,
       propietario_direccion,
       propietario_localidad,
-      transformedAlquileres, // <--- Aquí
-      transformedGastos,     // <--- Aquí
+      transformedAlquileres,
+      transformedGastos,
       alquileres_importe_parsed,
       agua_importe_parsed,
       luz_importe_parsed,
       tasa_importe_parsed,
       otros_parsed,
-      importe_total_parsed
+      importe_total_parsed,
+      id
     ];
+
 
     const result = await pool.query(query, values);
     res.status(201).json({ message: "Inquilino agregado", data: result.rows[0] });
@@ -216,11 +241,10 @@ const addInquilino = async (req, res) => {
 const updateInquilino = async (req, res) => {
   const { id } = req.params;
   const {
-    nombre, apellido, telefono, inicio_contrato, periodo, contrato, aumento,
+    nombre, apellido, telefono, inicio_contrato, vencimiento_contrato, periodo, contrato, aumento,
     propietario_nombre, propietario_direccion, propietario_localidad,
     alquileres_adeudados, gastos_adeudados,
-    // Recibimos estos como string desde el frontend
-    alquileres_importe, agua_importe, luz_importe, tasa_importe, otros, importe_total, // <-- Ahora son strings o null/undefined
+    alquileres_importe, agua_importe, luz_importe, tasa_importe, otros, importe_total
   } = req.body;
 
   if (!['Sí', 'No'].includes(alquileres_adeudados) || !['Sí', 'No'].includes(gastos_adeudados)) {
@@ -230,33 +254,35 @@ const updateInquilino = async (req, res) => {
   }
   // --- Aplicar la nueva función de parseo a los campos numéricos ---
   // (Similar a addInquilino)
+  const inicio_contratoISO = safeDateToISO(inicio_contrato);
+  const vencimiento_contratoISO = safeDateToISO(vencimiento_contrato);
   const alquileres_importe_parsed = parseNumericField(alquileres_importe);
   const agua_importe_parsed = parseNumericField(agua_importe);
   const luz_importe_parsed = parseNumericField(luz_importe);
   const tasa_importe_parsed = parseNumericField(tasa_importe);
   const otros_parsed = parseNumericField(otros);
   const importe_total_parsed = parseNumericField(importe_total);
-  const fechaISO = inicio_contrato ? new Date(inicio_contrato).toISOString() : null;
+
   const transformedAlquileres = alquileres_adeudados === 'Sí' ? 'si debe' : 'no debe';
   const transformedGastos = gastos_adeudados === 'Sí' ? 'si debe' : 'no debe';
 
   try {
     const query = `
       UPDATE inquilinos SET
-        nombre = $1, apellido = $2, telefono = $3, inicio_contrato = $4,
-        periodo = $5, contrato = $6, aumento = $7, propietario_nombre = $8,
-        propietario_direccion = $9, propietario_localidad = $10,
-        alquileres_adeudados = $11, gastos_adeudados = $12,
-        alquileres_importe = $13, agua_importe = $14, luz_importe = $15, tasa_importe = $16,
-        otros = $17, importe_total = $18
-      WHERE id = $19 RETURNING *;
+        nombre = $1, apellido = $2, telefono = $3, inicio_contrato = $4, vencimiento_contrato = $5,
+        periodo = $6, contrato = $7, aumento = $8, propietario_nombre = $9, propietario_direccion = $10,
+        propietario_localidad = $11, alquileres_adeudados = $12, gastos_adeudados = $13,
+        alquileres_importe = $14, agua_importe = $15, luz_importe = $16, tasa_importe = $17,
+        otros = $18, importe_total = $19
+      WHERE id = $20 RETURNING *;
     `;
 
     const values = [
       nombre,
       apellido,
       telefono,
-      fechaISO,
+      inicio_contratoISO,
+      vencimiento_contratoISO,
       periodo,
       contrato,
       aumento,

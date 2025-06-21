@@ -10,7 +10,8 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 import 'sweetalert2/dist/sweetalert2.min.css';
 import Swal from 'sweetalert2';
 import ReactPaginate from 'react-paginate';
-
+import InputMask from 'react-input-mask';
+//import { parse, differenceInDays, format } from 'date-fns';
 
 
 Modal.setAppElement('#root');
@@ -32,6 +33,178 @@ const InquilinosList = () => {
 
   const inquilinosPerPage = 6;
 
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+
+    try {
+      // Si ya está en formato DD/MM/AAAA
+      if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateString)) {
+        return dateString;
+      }
+
+      // Parsear desde ISO
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return '';
+
+      const day = date.getDate().toString().padStart(2, '0');
+      const month = (date.getMonth() + 1).toString().padStart(2, '0');
+      const year = date.getFullYear();
+
+      return `${day}/${month}/${year}`;
+    } catch {
+      return '';
+    }
+  };
+
+
+  const getContractStatus = (timeRemaining) => {
+    if (!timeRemaining) {
+      return {
+        status: 'unknown',
+        color: '#6c757d', // Gris
+        text: 'Sin fecha',
+        icon: 'bi bi-question-circle'
+      };
+    }
+
+    if (timeRemaining.expired) {
+      return {
+        status: 'expired',
+        color: '#dc3545', // Rojo
+        text: 'VENCIDO',
+        icon: 'bi bi-exclamation-triangle'
+      };
+    }
+
+    // Menos de 1 mes (30 días) - ROJO
+    if (timeRemaining.totalDays <= 30) {
+      return {
+        status: 'danger',
+        color: '#dc3545',
+        text: timeRemaining.days === 1 ? 'VENCE MAÑANA' : `VENCE EN ${timeRemaining.days} DÍAS`,
+        icon: 'bi bi-exclamation-triangle'
+      };
+    }
+
+    // Menos de 1 año (365 días) - NARANJA/VERDE
+    if (timeRemaining.totalDays <= 365) {
+      const months = timeRemaining.months + (timeRemaining.years * 12);
+      return {
+        status: months <= 2 ? 'warning' : 'success',
+        color: months <= 2 ? '#fd7e14' : '#28a745',
+        text: months === 1 ? '1 MES' : `${months} MESES`,
+        icon: months <= 2 ? 'bi bi-exclamation-circle' : 'bi bi-check-circle'
+      };
+    }
+
+    // Más de 1 año - VERDE
+    return {
+      status: 'success',
+      color: '#28a745',
+      text: timeRemaining.years === 1 ?
+        `1 AÑO ${timeRemaining.months} MESES` :
+        `${timeRemaining.years} AÑOS ${timeRemaining.months} MESES`,
+      icon: 'bi bi-check-circle'
+    };
+  };
+
+
+  // Función mejorada para calcular fecha de vencimiento
+  /**
+   * Calcula el tiempo restante hasta la fecha de vencimiento de un contrato
+   * @param {string|Date} endDate - Fecha de vencimiento en formato DD/MM/YYYY o objeto Date
+   * @returns {object|null} Objeto con el tiempo restante o null si la fecha es inválida
+   */
+  const calculateTimeRemaining = (endDate) => {
+    const end = parseDate(endDate);
+    if (!end) return null;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Normalizar fecha de fin
+    const endNormalized = new Date(end);
+    endNormalized.setHours(0, 0, 0, 0);
+
+    const diffMs = endNormalized - today;
+    const totalDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (totalDays < 0) {
+      return { expired: true, totalDays: 0, years: 0, months: 0, days: 0 };
+    }
+
+    // Calcular años, meses y días restantes
+    let years = end.getFullYear() - today.getFullYear();
+    let months = end.getMonth() - today.getMonth();
+    let days = end.getDate() - today.getDate();
+
+    // Ajustar días negativos
+    if (days < 0) {
+      months--;
+      const lastDayOfMonth = new Date(
+        today.getFullYear(),
+        today.getMonth() + 1,
+        0
+      ).getDate();
+      days += lastDayOfMonth;
+    }
+
+    // Ajustar meses negativos
+    if (months < 0) {
+      years--;
+      months += 12;
+    }
+
+    return {
+      expired: false,
+      totalDays,
+      years,
+      months,
+      days
+    };
+  };
+
+  /**
+   * Función auxiliar para parsear fechas en formato DD/MM/YYYY
+   * @param {string|Date} dateString - Fecha a parsear
+   * @returns {Date|null} Objeto Date o null si es inválido
+   */
+  const parseDate = (dateString) => {
+    if (!dateString) return null;
+
+    // Si ya es un objeto Date válido
+    if (dateString instanceof Date && !isNaN(dateString)) {
+      return dateString;
+    }
+
+    // Manejar formato DD/MM/YYYY
+    if (typeof dateString === 'string' && dateString.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+      const [day, month, year] = dateString.split('/').map(Number);
+
+      // Validación básica de fecha
+      if (day < 1 || day > 31 || month < 1 || month > 12 || year < 1000) {
+        return null;
+      }
+
+      const date = new Date(year, month - 1, day);
+
+      // Verificar si la fecha creada coincide con los valores ingresados
+      if (
+        date.getDate() !== day ||
+        date.getMonth() + 1 !== month ||
+        date.getFullYear() !== year
+      ) {
+        return null;
+      }
+
+      return date;
+    }
+
+    // Intentar parsear como fecha ISO u otros formatos
+    const date = new Date(dateString);
+    return isNaN(date.getTime()) ? null : date;
+  };
+
   useEffect(() => {
     console.log('selectedInquilino actualizado:', selectedInquilino);
   }, [selectedInquilino]);
@@ -46,11 +219,18 @@ const InquilinosList = () => {
 
   const handleViewClick = (inquilino) => {
     const formattedInquilino = { ...inquilino };
+
+    // Formatear campos numéricos
     numericFields.forEach(field => {
       if (formattedInquilino[field] !== undefined) {
         formattedInquilino[field] = new Intl.NumberFormat('es-AR').format(formattedInquilino[field]);
       }
     });
+
+    // Formatear fechas
+    formattedInquilino.inicio_contrato = formatDate(inquilino.inicio_contrato);
+    formattedInquilino.vencimiento_contrato = formatDate(inquilino.vencimiento_contrato);
+
     setSelectedInquilino(formattedInquilino);
     reset(formattedInquilino);
     setIsEditing(false);
@@ -59,11 +239,18 @@ const InquilinosList = () => {
 
   const handleEditClick = (inquilino) => {
     const formattedInquilino = { ...inquilino };
+
+    // Formatear campos numéricos
     numericFields.forEach(field => {
       if (formattedInquilino[field] !== undefined) {
         formattedInquilino[field] = new Intl.NumberFormat('es-AR').format(formattedInquilino[field]);
       }
     });
+
+    // Formatear fechas
+    formattedInquilino.inicio_contrato = formatDate(inquilino.inicio_contrato);
+    formattedInquilino.vencimiento_contrato = formatDate(inquilino.vencimiento_contrato);
+
     setSelectedInquilino(formattedInquilino);
     reset(formattedInquilino);
     setIsEditing(true);
@@ -85,9 +272,9 @@ const InquilinosList = () => {
     if (result.isConfirmed) {
       try {
         const response = await api.delete(`/inquilinos/${id}`);
-
-        if (!response.ok) throw new Error('Error al eliminar el inquilino');
-
+        if (response.status !== 200 && response.status !== 204) {
+          throw new Error('Error al eliminar el inquilino');
+        }
         await Swal.fire({
           title: '¡Eliminado!',
           text: 'El inquilino ha sido eliminado con éxito.',
@@ -111,32 +298,42 @@ const InquilinosList = () => {
 
   const onSubmit = async (data) => {
     setIsSubmitting(true);
+
     try {
-      const parsedData = { ...data };
-      numericFields.forEach(field => {
-        if (parsedData[field] !== undefined && typeof parsedData[field] === 'string') {
-          parsedData[field] = Number(parsedData[field].replace(/\./g, ''));
-        }
-      });
+      const payload = {
+        ...data,
 
-      // 2. Reemplaza el fetch por la llamada con api
-      // eslint-disable-next-line no-unused-vars
-      const response = await api.put(`/inquilinos/${selectedInquilino.id}`, parsedData); // <--- Modificar esta línea
-
-      // 3. Elimina estas líneas innecesarias:
-      // if (!response.ok) throw new Error('Error al actualizar');
-
-      await Swal.fire('Éxito', 'Datos actualizados correctamente', 'success');
-
-      refetch();
-      setIsEditing(false);
-      setViewModalOpen(false);
-      reset();
+        inicio_contrato: data.inicio_contrato
+          ? parseDate(data.inicio_contrato)?.toISOString()
+          : null
+      };
+      console.log('Payload a enviar:', payload);
+      // Enviar datos al backend
+      const response = await api.put(`/inquilinos/${selectedInquilino.id}`, payload);
+      if (response.status === 200) {
+        await Swal.fire({
+          title: 'Éxito',
+          text: 'Datos actualizados correctamente',
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false
+        });
+        refetch();
+        setIsEditing(false);
+        setViewModalOpen(false);
+        reset();
+      } else {
+        throw new Error(response.data?.message || 'Error en la actualización');
+      }
 
     } catch (error) {
-      // 4. Mejora el manejo de errores
-      const errorMessage = error.response?.data?.message || error.message;
-      Swal.fire('Error', errorMessage, 'error');
+      console.error('Error al guardar:', error);
+      Swal.fire({
+        title: 'Error',
+        text: error.response?.data?.message || error.message || 'Error al guardar los cambios',
+        icon: 'error',
+        confirmButtonText: 'Entendido'
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -156,13 +353,13 @@ const InquilinosList = () => {
     try {
       // 1. Crear elemento temporal con dimensiones exactas
       const receiptElement = document.createElement('div');
-      receiptElement.style.width = '210mm'; // Ancho completo A4
-      receiptElement.style.minHeight = '148mm'; // Mitad de altura A4
+      receiptElement.style.width = '210mm';
+      receiptElement.style.minHeight = '148mm';
       receiptElement.style.position = 'absolute';
       receiptElement.style.left = '-9999px';
       receiptElement.style.background = 'white';
       receiptElement.style.boxSizing = 'border-box';
-      receiptElement.style.padding = '10mm'; // Margen interno
+      receiptElement.style.padding = '10mm';
 
       // 2. HTML del recibo con estructura compacta
       receiptElement.innerHTML = `
@@ -266,6 +463,7 @@ const InquilinosList = () => {
             <div class="section-content">
               Período:<br>${inquilino.periodo}<br><br>
               Contrato:<br>${inquilino.contrato}<br><br>
+              Duración de contrato:<br>${inquilino.duracion_contrato}<br><br>
               Aumento:<br>${inquilino.aumento}<br><br>
               Estado: ${inquilino.alquileres_adeudados > 0 ? `${inquilino.alquileres_adeudados} meses adeudados` : 'Al día'}
             </div>
@@ -486,6 +684,7 @@ const InquilinosList = () => {
           <ul class="list-group">
             <li class="list-group-item"><strong>Periodo:</strong> ${inquilino.periodo}</li>
             <li class="list-group-item"><strong>Contrato:</strong> ${inquilino.contrato}</li>
+            <li class="list-group-item"><strong>Duración de contrato:</strong> ${inquilino.duracion_contrato} meses</li>
             <li class="list-group-item"><strong>Aumento:</strong> ${inquilino.aumento}</li>
             <li class="list-group-item"><strong>Estado:</strong> ${inquilino.alquileres_adeudados > 0 ? `${inquilino.alquileres_adeudados} meses adeudados` : 'Al día'}</li>
           </ul>
@@ -581,6 +780,7 @@ const InquilinosList = () => {
           <ul class="list-group">
             <li class="list-group-item"><strong>Periodo:</strong> ${inquilino.periodo}</li>
             <li class="list-group-item"><strong>Contrato:</strong> ${inquilino.contrato}</li>
+            <li class="list-group-item"><strong>Duración de contrato:</strong> ${inquilino.duracion_contrato} meses</li>
             <li class="list-group-item"><strong>Aumento:</strong> ${inquilino.aumento}</li>
             <li class="list-group-item"><strong>Estado:</strong> ${inquilino.alquileres_adeudados > 0 ? `${inquilino.alquileres_adeudados} meses adeudados` : 'Al día'}</li>
           </ul>
@@ -776,6 +976,8 @@ const InquilinosList = () => {
             <h5 class="fw-bold">Detalles del Alquiler</h5>
             <p><strong>Periodo:</strong> ${inquilino.periodo}</p>
             <p><strong>Contrato:</strong> ${inquilino.contrato}</p>
+            <p><strong>Inicio de contrato:</strong> ${inquilino.inicio_contrato}</p>
+            <p><strong>Duración de contrato:</strong> ${inquilino.duracion_contrato} meses</p>
             <p><strong>Aumento:</strong> ${inquilino.aumento}</p>
             <p><strong>Estado:</strong> ${inquilino.alquileres_adeudados > 0 ? `${inquilino.alquileres_adeudados} meses adeudados` : 'Al día'}</p>
           </div>
@@ -850,6 +1052,8 @@ const InquilinosList = () => {
             <h5 class="fw-bold">Detalles del Alquiler</h5>
             <p><strong>Periodo:</strong> ${inquilino.periodo}</p>
             <p><strong>Contrato:</strong> ${inquilino.contrato}</p>
+            <p><strong>Inicio de contrato:</strong> ${inquilino.inicio_contrato}</p>
+            <p><strong>Duración de contrato:</strong> ${inquilino.duracion_contrato} meses</p>          
             <p><strong>Aumento:</strong> ${inquilino.aumento}</p>
             <p><strong>Estado:</strong> ${inquilino.alquileres_adeudados > 0 ? `${inquilino.alquileres_adeudados} meses adeudados` : 'Al día'}</p>
           </div>
@@ -918,6 +1122,8 @@ https://postimg.cc/mPst7Kzn
   *Detalles del Alquiler:*
   📅 Período: ${inquilino.periodo}
   📄 Contrato: ${inquilino.contrato}
+  📅 Inicio de contrato ${inquilino.inicio_contrato}
+  📅 Duración de contrato ${inquilino.duracion_contrato} meses
   📈 Aumento: ${inquilino.aumento}
   📊 Estado: ${inquilino.alquileres_adeudados > 0 ? `${inquilino.alquileres_adeudados} meses adeudados` : 'Al día'}
   
@@ -926,8 +1132,7 @@ https://postimg.cc/mPst7Kzn
   💧 Agua: ${new Intl.NumberFormat('es-AR').format(inquilino.agua_importe)}
   📜 Tasa: ${new Intl.NumberFormat('es-AR').format(inquilino.tasa_importe)}
   💡 Luz: ${new Intl.NumberFormat('es-AR').format(inquilino.luz_importe)}
-  📦 Otros:${new Intl.NumberFormat('es-AR').format(inquilino.otros)}
-
+ 📦 Otros: ${new Intl.NumberFormat('es-AR').format(inquilino.otros || 0)}
   
   *Total a Pagar:*
   💵 ${new Intl.NumberFormat('es-AR').format(inquilino.importe_total)}
@@ -1013,76 +1218,100 @@ https://postimg.cc/mPst7Kzn
       </div>
 
       <table className="table custom-table">
+
         <thead>
           <tr>
-            <th> <i className="bi bi-person-circle me-2"></i></th>
+            <th>#</th>
             <th>Apellido</th>
             <th>Nombre</th>
             <th>Teléfono</th>
             <th>Dirección</th>
+            <th>Inicio Contrato</th>
+            <th>Fin Contrato</th>  {/* Columna para la fecha de vencimiento */}
+            <th>Tiempo Restante</th>  {/* Columna para el cálculo del tiempo */}
             <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
-          {currentInquilinos?.map((inquilino, index) => (
-            <tr key={inquilino.id}>
-              <td>{currentPage * inquilinosPerPage + index + 1}</td>
-              <td>{inquilino.apellido}</td>
-              <td>{inquilino.nombre}</td>
-              <td>{inquilino.telefono}</td>
-              <td>{inquilino.propietario_direccion}</td>
-              <td>
-                <button
-                  className="btn btn-sm me-2"
-                  style={{ backgroundColor: '#17a2b8', color: '#fff' }}
-                  onClick={() => handleViewClick(inquilino)}
-                >
-                  <i className="bi bi-eye"></i>
-                </button>
-                <button
-                  className="btn btn-sm me-2"
-                  style={{ backgroundColor: '#007bff', color: '#fff' }}
-                  onClick={() => handleEditClick(inquilino)}
-                >
-                  <i className="bi bi-pencil"></i>
-                </button>
-                <button
-                  className="btn btn-sm me-2"
-                  style={{ backgroundColor: '#dc3545', color: '#fff' }}
-                  onClick={() => handleDeleteClick(inquilino.id)}
-                >
-                  <i className="bi bi-trash"></i>
-                </button>
+          {currentInquilinos?.map((inquilino, index) => {
+            const timeRemaining = calculateTimeRemaining(inquilino.vencimiento_contrato);
+            const contractStatus = getContractStatus(timeRemaining);
 
-                <button
-                  className="btn btn-sm me-2"
-                  style={{ backgroundColor: '#7028a7', color: '#fff' }}
-                  onClick={() => handlePrint(inquilino)}
-                >
-                  <i className="bi bi-printer"></i>
-                </button>
+            return (
+              <tr key={inquilino.id}>
+                <td>{currentPage * inquilinosPerPage + index + 1}</td>
+                <td>{inquilino.apellido || '-'}</td>
+                <td>{inquilino.nombre || '-'}</td>
+                <td>{inquilino.telefono || '-'}</td>
+                <td>{inquilino.propietario_direccion || '-'}</td>
+                <td>{formatDate(inquilino.inicio_contrato) || '-'}</td>
 
+                {/* Columna Fin Contrato - Solo muestra la fecha formateada */}
+                <td>{formatDate(inquilino.vencimiento_contrato) || '-'}</td>
 
-                <button
-                  className="btn btn-sm me-2"
-                  style={{ backgroundColor: '#05933a', color: '#fff' }}
-                  onClick={() => handleSendWhatsApp(inquilino)}
-                >
-                  <i className="bi bi-whatsapp"></i>
-
-                </button>
-
-                <button
-                  className="btn btn-sm me-2"
-                  style={{ backgroundColor: '#28a745', color: '#fff' }}
-                  onClick={() => handleSaveReceipt(inquilino)}
-                  title="Guardar recibo"
-                >
-                  <i className="bi bi-save"></i>
-                </button>
-              </td>
-            </tr>
-          ))}
+                {/* Columna Tiempo Restante - Muestra el cálculo con icono y color */}
+                <td>
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <i
+                      className={`${contractStatus.icon} me-2`}
+                      style={{ color: contractStatus.color }}
+                    ></i>
+                    <span style={{
+                      color: contractStatus.color,
+                      fontWeight: contractStatus.status === 'expired' ? 'bold' : 'normal'
+                    }}>
+                      {contractStatus.text}
+                    </span>
+                  </div>
+                </td>
+                <td>
+                  <button
+                    className="btn btn-sm me-2"
+                    style={{ backgroundColor: '#17a2b8', color: '#fff' }}
+                    onClick={() => handleViewClick(inquilino)}
+                  >
+                    <i className="bi bi-eye"></i>
+                  </button>
+                  <button
+                    className="btn btn-sm me-2"
+                    style={{ backgroundColor: '#007bff', color: '#fff' }}
+                    onClick={() => handleEditClick(inquilino)}
+                  >
+                    <i className="bi bi-pencil"></i>
+                  </button>
+                  <button
+                    className="btn btn-sm me-2"
+                    style={{ backgroundColor: '#dc3545', color: '#fff' }}
+                    onClick={() => handleDeleteClick(inquilino.id)}
+                  >
+                    <i className="bi bi-trash"></i>
+                  </button>
+                  <button
+                    className="btn btn-sm me-2"
+                    style={{ backgroundColor: '#7028a7', color: '#fff' }}
+                    onClick={() => handlePrint(inquilino)}
+                  >
+                    <i className="bi bi-printer"></i>
+                  </button>
+                  <button
+                    className="btn btn-sm me-2"
+                    style={{ backgroundColor: '#05933a', color: '#fff' }}
+                    onClick={() => handleSendWhatsApp(inquilino)}
+                  >
+                    <i className="bi bi-whatsapp"></i>
+                  </button>
+                  <button
+                    className="btn btn-sm me-2"
+                    style={{ backgroundColor: '#28a745', color: '#fff' }}
+                    onClick={() => handleSaveReceipt(inquilino)}
+                    title="Guardar recibo"
+                  >
+                    <i className="bi bi-save"></i>
+                  </button>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
 
@@ -1097,228 +1326,290 @@ https://postimg.cc/mPst7Kzn
         activeClassName={'active'}
       />
 
-<Modal
-  isOpen={isViewModalOpen}
-  onRequestClose={() => setViewModalOpen(false)}
-  contentLabel="Ver/Editar Inquilino"
-  style={{
-    content: {
-      maxWidth: '800px',
-      margin: 'auto',
-      height: '85vh',
-      maxHeight: '85vh',
-      overflowY: 'auto',
-      background: '#333',
-      color: '#f0f0f0',
-      borderRadius: '12px',
-      border: 'none',
-      boxShadow: '0px 10px 30px rgba(0, 0, 0, 0.5)',
-      padding: '25px',
-      animation: 'fadeIn 0.3s ease-in-out',
-    },
-    overlay: {
-      backgroundColor: 'rgba(0, 0, 0, 0.8)',
-      backdropFilter: 'blur(3px)',
-    },
-  }}
->
-  <h3 style={{ 
-    borderBottom: '2px solid #444',
-    paddingBottom: '12px',
-    marginBottom: '25px',
-    fontSize: '1.4rem',
-    fontWeight: '500',
-    fontFamily: "'Poppins', sans-serif",
-    color: '#e0e0e0'
-  }}>
-    {isEditing ? 'Editar Información del Inquilino' : 'Información del Inquilino'}
-  </h3>
+      <Modal
+        isOpen={isViewModalOpen}
+        onRequestClose={() => setViewModalOpen(false)}
+        contentLabel="Ver/Editar Inquilino"
+        style={{
+          content: {
+            maxWidth: '800px',
+            margin: 'auto',
+            height: '85vh',
+            maxHeight: '85vh',
+            overflowY: 'auto',
+            background: '#333',
+            color: '#f0f0f0',
+            borderRadius: '12px',
+            border: 'none',
+            boxShadow: '0px 10px 30px rgba(0, 0, 0, 0.5)',
+            padding: '25px',
+            animation: 'fadeIn 0.3s ease-in-out',
+          },
+          overlay: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            backdropFilter: 'blur(3px)',
+          },
+        }}
+      >
+        <h3 style={{
+          borderBottom: '2px solid #444',
+          paddingBottom: '12px',
+          marginBottom: '25px',
+          fontSize: '1.4rem',
+          fontWeight: '500',
+          fontFamily: "'Poppins', sans-serif",
+          color: '#e0e0e0'
+        }}>
+          {isEditing ? 'Editar Información del Inquilino' : 'Información del Inquilino'}
+        </h3>
 
-  {selectedInquilino && (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: '1fr 1fr', 
-        gap: '20px',
-        marginBottom: '25px'
-      }}>
-        {Object.keys(selectedInquilino).map((key) => {
-          if (key === 'alquileres_adeudados' || key === 'gastos_adeudados') {
-            return (
-              <div key={key}>
-                <label style={{
-                  fontFamily: "'Poppins', sans-serif",
-                  fontWeight: '300',
-                  display: 'block',
-                  fontSize: '0.9rem',
-                  marginBottom: '8px',
-                  color: '#d0d0d0'
-                }}>
-                  {formatFieldName(key)}
-                </label>
-                <select
-                  {...register(key)}
-                  disabled={!isEditing}
-                  style={{
-                    background: isEditing ? '#f8f9fa' : '#404040',
-                    color: isEditing ? '#333' : '#f0f0f0',
-                    border: '1px solid #555',
-                    borderRadius: '6px',
-                    fontSize: '0.95rem',
-                    fontFamily: "'Poppins', sans-serif",
-                    fontWeight: '300',
-                    padding: '10px 12px',
-                    width: '100%',
-                    outline: 'none',
-                    appearance: 'none',
-                    backgroundImage: 'url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSIjZmZmZmZmIj48cGF0aCBkPSJNNyAxMGw1IDUgNS01eiIvPjwvc3ZnPg==")',
-                    backgroundRepeat: 'no-repeat',
-                    backgroundPosition: 'right 12px center',
-                    backgroundSize: '14px'
-                  }}
-                >
-                  <option value="Sí">Sí</option>
-                  <option value="No">No</option>
-                </select>
-              </div>
-            );
-          }
-          
-          const value = key === 'inicio_contrato'
-            ? new Date(selectedInquilino[key]).toLocaleDateString('es-AR')
-            : !isEditing && numericFields.has(key)
-              ? new Intl.NumberFormat('es-AR').format(selectedInquilino[key])
-              : selectedInquilino[key];
-              
-          return (
-            <div key={key}>
-              <label style={{
-                fontFamily: "'Poppins', sans-serif",
-                fontWeight: '300',
-                display: 'block',
-                fontSize: '0.9rem',
-                marginBottom: '8px',
-                color: '#d0d0d0'
-              }}>
-                {formatFieldName(key)}
-              </label>
-              <input
-                type="text"
-                {...register(key)}
-                defaultValue={value}
-                readOnly={!isEditing}
-                style={{
-                  background: isEditing ? '#f8f9fa' : '#404040',
-                  color: isEditing ? '#333' : '#f0f0f0',
-                  border: '1px solid #555',
-                  borderRadius: '6px',
-                  fontSize: '0.95rem',
-                  fontFamily: "'Poppins', sans-serif",
-                  fontWeight: '300',
-                  padding: '10px 12px',
-                  width: '100%',
-                  outline: 'none',
-                  transition: 'all 0.2s ease'
-                }}
-              />
+        {selectedInquilino && (
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '20px',
+              marginBottom: '25px'
+            }}>
+              {Object.keys(selectedInquilino).map((key) => {
+                // Manejo de campos de fecha (inicio_contrato y vencimiento_contrato)
+                if (key === 'inicio_contrato' || key === 'vencimiento_contrato') {
+                  return (
+                    <div key={key}>
+                      <label style={{
+                        fontFamily: "'Poppins', sans-serif",
+                        fontWeight: '300',
+                        display: 'block',
+                        fontSize: '0.9rem',
+                        marginBottom: '8px',
+                        color: '#d0d0d0'
+                      }}>
+                        {formatFieldName(key)}
+                      </label>
+                      {isEditing ? (
+                        <InputMask
+                          mask="99/99/9999"
+                          maskChar={null}
+                          {...register(key)}
+                          defaultValue={formatDate(selectedInquilino[key])}
+                          placeholder="DD/MM/AAAA"
+                          style={{
+                            background: isEditing ? '#f8f9fa' : '#404040',
+                            color: isEditing ? '#333' : '#f0f0f0',
+                            border: '1px solid #555',
+                            borderRadius: '6px',
+                            fontSize: '0.95rem',
+                            padding: '10px 12px',
+                            width: '100%',
+                            outline: 'none'
+                          }}
+                        />
+                      ) : (
+                        <input
+                          type="text"
+                          value={formatDate(selectedInquilino[key])}
+                          readOnly
+                          style={{
+                            background: '#404040',
+                            color: '#f0f0f0',
+                            border: '1px solid #555',
+                            borderRadius: '6px',
+                            fontSize: '0.95rem',
+                            fontFamily: "'Poppins', sans-serif",
+                            fontWeight: '300',
+                            padding: '10px 12px',
+                            width: '100%',
+                            outline: 'none'
+                          }}
+                        />
+                      )}
+                    </div>
+                  );
+                }
+
+                // Eliminar el bloque de duracion_contrato ya que lo reemplazamos por vencimiento_contrato
+                if (key === 'duracion_contrato') {
+                  return null; // O simplemente no incluir este if
+                }
+
+                if (key === 'alquileres_adeudados' || key === 'gastos_adeudados') {
+                  const displayValue = selectedInquilino[key] === 'si debe' ? 'Sí' : 'No';
+                  return (
+                    <div key={key}>
+                      <label style={{
+                        fontFamily: "'Poppins', sans-serif",
+                        fontWeight: '300',
+                        display: 'block',
+                        fontSize: '0.9rem',
+                        marginBottom: '8px',
+                        color: '#d0d0d0'
+                      }}>
+                        {formatFieldName(key)}
+                      </label>
+                      <select
+                        {...register(key)}
+                        defaultValue={displayValue}
+                        disabled={!isEditing}
+                        style={{
+                          backgroundColor: isEditing ? '#f8f9fa' : '#404040',
+                          color: isEditing ? '#333' : '#f0f0f0',
+                          border: '1px solid #555',
+                          borderRadius: '6px',
+                          fontSize: '0.95rem',
+                          fontFamily: "'Poppins', sans-serif",
+                          fontWeight: '300',
+                          padding: '10px 12px',
+                          width: '100%',
+                          outline: 'none',
+                          appearance: 'none',
+                          backgroundImage: 'url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSIjZmZmZmZmIj48cGF0aCBkPSJNNyAxMGw1IDUgNS01eiIvPjwvc3ZnPg==")',
+                          backgroundRepeat: 'no-repeat',
+                          backgroundPosition: 'right 12px center',
+                          backgroundSize: '14px'
+                        }}
+                      >
+                        <option value="Sí">Sí</option>
+                        <option value="No">No</option>
+                      </select>
+                    </div>
+                  );
+                }
+
+                const value = key === 'inicio_contrato' || key === 'vencimiento_contrato'
+                  ? formatDate(selectedInquilino[key])
+                  : !isEditing && numericFields.has(key)
+                    ? new Intl.NumberFormat('es-AR').format(selectedInquilino[key])
+                    : selectedInquilino[key];
+
+                return (
+                  <div key={key}>
+                    <label style={{
+                      fontFamily: "'Poppins', sans-serif",
+                      fontWeight: '300',
+                      display: 'block',
+                      fontSize: '0.9rem',
+                      marginBottom: '8px',
+                      color: '#d0d0d0'
+                    }}>
+                      {formatFieldName(key)}
+                    </label>
+                    <input
+                      type="text"
+                      {...register(key)}
+                      defaultValue={value}
+                      readOnly={!isEditing}
+                      style={{
+                        background: isEditing ? '#f8f9fa' : '#404040',
+                        color: isEditing ? '#333' : '#f0f0f0',
+                        border: '1px solid #555',
+                        borderRadius: '6px',
+                        fontSize: '0.95rem',
+                        fontFamily: "'Poppins', sans-serif",
+                        fontWeight: '300',
+                        padding: '10px 12px',
+                        width: '100%',
+                        outline: 'none',
+                        transition: 'all 0.2s ease'
+                      }}
+                    />
+                  </div>
+                );
+              })}
             </div>
-          );
-        })}
-      </div>
 
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'flex-end', 
-        gap: '15px',
-        marginTop: '25px',
-        borderTop: '1px solid #444',
-        paddingTop: '20px'
-      }}>
-        {isEditing ? (
-          <>
-            <button
-              type="button"
-              onClick={() => setIsEditing(false)}
-              style={{
-                background: 'linear-gradient(135deg, #666, #444)',
-                color: '#fff',
-                border: 'none',
-                padding: '10px 22px',
-                borderRadius: '6px',
-                fontFamily: "'Poppins', sans-serif",
-                fontWeight: '500',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                textTransform: 'uppercase'
-              }}
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              style={{
-                background: 'linear-gradient(135deg, #34c759, #248a3d)',
-                color: '#fff',
-                border: 'none',
-                padding: '10px 22px',
-                borderRadius: '6px',
-                fontFamily: "'Poppins', sans-serif",
-                fontWeight: '500',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                textTransform: 'uppercase'
-              }}
-            >
-              {isSubmitting ? 'Guardando...' : 'Guardar'}
-            </button>
-          </>
-        ) : (
-          <>
-            <button
-              type="button"
-              onClick={() => setIsEditing(true)}
-              style={{
-                background: 'linear-gradient(135deg, #4a90e2, #2f6eb5)',
-                color: '#fff',
-                border: 'none',
-                padding: '10px 22px',
-                borderRadius: '6px',
-                fontFamily: "'Poppins', sans-serif",
-                fontWeight: '500',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                textTransform: 'uppercase'
-              }}
-            >
-              Editar
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewModalOpen(false)}
-              style={{
-                background: 'linear-gradient(135deg, #ff3b30, #cc2a22)',
-                color: '#fff',
-                border: 'none',
-                padding: '10px 22px',
-                borderRadius: '6px',
-                fontFamily: "'Poppins', sans-serif",
-                fontWeight: '500',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                textTransform: 'uppercase'
-              }}
-            >
-              Cerrar
-            </button>
-          </>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'flex-end',
+              gap: '15px',
+              marginTop: '25px',
+              borderTop: '1px solid #444',
+              paddingTop: '20px'
+            }}>
+              {isEditing ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setIsEditing(false)}
+                    style={{
+                      background: 'linear-gradient(135deg, #666, #444)',
+                      color: '#fff',
+                      border: 'none',
+                      padding: '10px 22px',
+                      borderRadius: '6px',
+                      fontFamily: "'Poppins', sans-serif",
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      textTransform: 'uppercase'
+                    }}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    style={{
+                      background: 'linear-gradient(135deg, #34c759, #248a3d)',
+                      color: '#fff',
+                      border: 'none',
+                      padding: '10px 22px',
+                      borderRadius: '6px',
+                      fontFamily: "'Poppins', sans-serif",
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      textTransform: 'uppercase'
+                    }}
+                  >
+                    {isSubmitting ? 'Guardando...' : 'Guardar'}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setIsEditing(true)}
+                    style={{
+                      background: 'linear-gradient(135deg, #4a90e2, #2f6eb5)',
+                      color: '#fff',
+                      border: 'none',
+                      padding: '10px 22px',
+                      borderRadius: '6px',
+                      fontFamily: "'Poppins', sans-serif",
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      textTransform: 'uppercase'
+                    }}
+                  >
+                    Editar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewModalOpen(false)}
+                    style={{
+                      background: 'linear-gradient(135deg, #ff3b30, #cc2a22)',
+                      color: '#fff',
+                      border: 'none',
+                      padding: '10px 22px',
+                      borderRadius: '6px',
+                      fontFamily: "'Poppins', sans-serif",
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      textTransform: 'uppercase'
+                    }}
+                  >
+                    Cerrar
+                  </button>
+                </>
+              )}
+            </div>
+          </form>
         )}
-      </div>
-    </form>
-  )}
-</Modal>
+      </Modal>
 
-    </div>
+    </div >
   );
 };
 

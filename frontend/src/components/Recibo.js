@@ -30,6 +30,8 @@ const Recibo = React.forwardRef(({ inquilino }, ref) => {
     telefono = 'N/A',
     periodo = 'N/A',
     contrato = 'N/A',
+    inicio_contrato = 'N/A',
+    duracion_contrato = 'N/A',
     aumento = 'N/A',
     alquileres_adeudados = 0,
     gastos_adeudados = 'N/A',
@@ -52,7 +54,7 @@ const Recibo = React.forwardRef(({ inquilino }, ref) => {
     const year = d.getFullYear();
     return `${day}-${month}-${year}`; // Ahora es dd-mm-yyyy
   };
-  
+
 
   return (
     <div ref={reciboRef} className="container mt-5" role="document" aria-label="Recibo de Alquiler"> {/* Usamos la referencia ref={reciboRef} */}
@@ -128,6 +130,8 @@ const Recibo = React.forwardRef(({ inquilino }, ref) => {
             <ul className="list-unstyled">
               <li><strong>Periodo:</strong> {periodo}</li>
               <li><strong>Contrato:</strong> {contrato}</li>
+              <li><strong>Inicio de contrato:</strong> {inicio_contrato}</li>
+              <li><strong>Duración de contrato:</strong> {duracion_contrato}</li>
               <li><strong>Aumento:</strong> {aumento}</li>
               <li><strong>Estado:</strong> {alquileres_adeudados > 0
                 ? `${alquileres_adeudados} meses adeudados`

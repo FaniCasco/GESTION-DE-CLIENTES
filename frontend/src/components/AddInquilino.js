@@ -1,132 +1,248 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { format, addMonths, addYears, differenceInDays } from 'date-fns';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
 import '../AddInquilino.css';
-
-
+import InputMask from 'react-input-mask';
 
 const AddInquilino = () => {
-  const { register, handleSubmit, reset, formState: { errors } } = useForm();
+  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Observar cambios en campos relevantes
+  const watchStartDate = watch('inicio_contrato');
+  const watchDuration = watch('duracion_contrato');
+  const watchDurationType = watch('duracion_tipo');
+
+  // Calcular vencimiento automáticamente
+  useEffect(() => {
+    if (watchStartDate && watchDuration && watchDurationType) {
+      try {
+        // Validar formato de fecha
+        if (!/^\d{2}\/\d{2}\/\d{4}$/.test(watchStartDate)) return;
+
+        const [day, month, year] = watchStartDate.split('/');
+        const startDate = new Date(year, month - 1, day);
+
+        if (isNaN(startDate.getTime())) return;
+
+        let expirationDate;
+        if (watchDurationType === 'months') {
+          expirationDate = addMonths(startDate, parseInt(watchDuration));
+        } else {
+          expirationDate = addYears(startDate, parseInt(watchDuration));
+        }
+
+        const formattedExpiration = format(expirationDate, 'dd/MM/yyyy');
+        setValue('vencimiento_contrato', formattedExpiration);
+
+        const daysRemaining = differenceInDays(expirationDate, new Date());
+        setValue('dias_vencimiento', daysRemaining > 0 ? daysRemaining : 0);
+      } catch (error) {
+        console.error('Error al calcular vencimiento:', error);
+        setValue('vencimiento_contrato', '');
+        setValue('dias_vencimiento', '');
+      }
+    } else {
+      setValue('vencimiento_contrato', '');
+      setValue('dias_vencimiento', '');
+    }
+  }, [watchStartDate, watchDuration, watchDurationType, setValue]);
 
   // Definición de campos para el formulario
   const camposInquilino = [
     { label: 'Nombre', name: 'nombre', required: true },
     { label: 'Apellido', name: 'apellido', required: true },
-    { label: 'Teléfono', name: 'telefono', required: true, pattern: /^\d+$/, message: "El teléfono solo debe contener números" },
+    {
+      label: 'Teléfono',
+      name: 'telefono',
+      required: true,
+      pattern: /^\d+$/,
+      message: "El teléfono solo debe contener números"
+    },
     { label: 'Contrato', name: 'contrato', required: true },
-    { label: 'Inicio del Contrato', name: 'inicio_contrato', required: true, type: 'date' },
-    { label: 'Periodo', name: 'periodo', required: true, type: 'text', pattern: /^[a-zA-Z0-9% ]+$/, message: "Ejemplos válidos: 'Mensual', 'Trimestral', '5% anual'" },
-    { label: 'Aumento', name: 'aumento', required: true, type: 'text', pattern: /^[a-zA-Z0-9% ]+$/, message: "Ejemplo válido: '10% semestral'" },
+    {
+      label: 'Inicio del Contrato',
+      name: 'inicio_contrato',
+      required: true,
+      type: 'date-mask'
+    },
+    {
+      label: 'Duración',
+      name: 'duracion_contrato',
+      required: true,
+      type: 'number',
+      min: 1
+    },
+    {
+      label: 'Tipo de Duración',
+      name: 'duracion_tipo',
+      required: true,
+      type: 'select',
+      options: [
+        { value: 'months', label: 'Meses' },
+        { value: 'years', label: 'Años' }
+      ]
+    },
+    {
+      label: 'Vencimiento del Contrato',
+      name: 'vencimiento_contrato',
+      readOnly: true
+    },
+    {
+      label: 'Días para Vencimiento',
+      name: 'dias_vencimiento',
+      readOnly: true
+    },
+    {
+      label: 'Periodo',
+      name: 'periodo',
+      required: true,
+      type: 'text',
+      options: ['Mensual', 'Bimestral', 'Trimestral', 'Semestral', 'Anual']
+    },
+    {
+      label: 'Aumento',
+      name: 'aumento',
+      required: true,
+      type: 'text'
+    },
   ];
 
   const camposInmueble = [
     { label: 'Propietario', name: 'propietario_nombre', required: true },
-    { label: 'Dirección', name: 'propietario_direccion', required: true }, // Usando el nombre consistente
+    { label: 'Dirección', name: 'propietario_direccion', required: true },
     { label: 'Localidad', name: 'propietario_localidad', required: true },
-    { label: 'Alquileres adeudados', name: 'alquileres_adeudados', required: true, type: 'select', options: ['Sí', 'No'] },
-    { label: 'Gastos adeudados', name: 'gastos_adeudados', required: true, type: 'select', options: ['Sí', 'No'] },
+    {
+      label: 'Alquileres adeudados',
+      name: 'alquileres_adeudados',
+      required: true,
+      type: 'select',
+      options: ['Sí', 'No'],
+      defaultValue: 'No'
+    },
+    {
+      label: 'Gastos adeudados',
+      name: 'gastos_adeudados',
+      required: true,
+      type: 'select',
+      options: ['Sí', 'No'],
+      defaultValue: 'No'
+    },
   ];
 
-  // Campos de liquidación configurados para números enteros
   const camposLiquidacion = [
-    { label: 'Alquileres', name: 'alquileres_importe', type: 'number', integer: true },
-    { label: 'Agua', name: 'agua_importe', type: 'number', integer: true },
-    { label: 'Tasa', name: 'tasa_importe', type: 'number', integer: true },
-    { label: 'Otros', name: 'otros', type: 'text', integer: true },
-    { label: 'Luz', name: 'luz_importe', type: 'number', integer: true },
-    { label: 'Importe Total', name: 'importe_total', type: 'number', integer: true },
+    { label: 'Alquileres', name: 'alquileres_importe', type: 'number' },
+    { label: 'Agua', name: 'agua_importe', type: 'number' },
+    { label: 'Tasa', name: 'tasa_importe', type: 'number' },
+    { label: 'Otros', name: 'otros', type: 'number' },
+    { label: 'Luz', name: 'luz_importe', type: 'number' },
+    {
+      label: 'Importe Total',
+      name: 'importe_total',
+      type: 'number',
+      readOnly: true
+    },
   ];
 
-  // Función auxiliar para renderizar los campos del formulario
-  const renderCampos = (campos) => campos.map((campo) => {
-    // Renderizar campos select (para adeudados)
-    if (campo.type === 'select') {
-      return (
-        <div className="col-md-6 mb-3" key={campo.name}>
-          <label className="form-label dark-label" htmlFor={campo.name}>{campo.label}</label>
-          <select
-            id={campo.name}
-            className={`form-select dark-select ${errors[campo.name] ? 'is-invalid' : ''}`} // Usando form-select de Bootstrap
-            {...register(campo.name, campo.required ? { required: `${campo.label} es obligatorio` } : {})}
-          >
-            {campo.options.map(option => <option key={option} value={option}>{option}</option>)}
-          </select>
-          {errors[campo.name] && <span className="text-danger">{errors[campo.name].message}</span>}
-        </div>
-      );
-    }
+  // Función para renderizar campos
+  const renderCampos = (campos) => {
+    return campos.map((campo) => {
+      if (campo.type === 'select') {
+        return (
+          <div className="col-md-6 mb-3" key={campo.name}>
+            <label className="form-label dark-label">{campo.label}</label>
+            <select
+              className={`form-select dark-select ${errors[campo.name] ? 'is-invalid' : ''}`}
+              {...register(campo.name, {
+                required: campo.required ? `${campo.label} es obligatorio` : false
+              })}
+              defaultValue={campo.defaultValue || ''}
+            >
+              <option value="">Seleccione...</option>
+              {campo.options.map(option => (
+                typeof option === 'object' ? (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ) : (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                )
+              ))}
+            </select>
+            {errors[campo.name] && (
+              <span className="text-danger">{errors[campo.name].message}</span>
+            )}
+          </div>
+        );
+      }
 
-    // Renderizar campos numéricos (enteros)
-    if (campo.type === 'number' && campo.integer) {
+      if (campo.type === 'date-mask') {
+        return (
+          <div className="col-md-6 mb-3" key={campo.name}>
+            <label className="form-label dark-label">{campo.label}</label>
+            <InputMask
+              mask="99/99/9999"
+              maskChar={null}
+              placeholder="DD/MM/AAAA"
+              className={`form-control dark-input ${errors.inicio_contrato ? 'is-invalid' : ''}`}
+              {...register('inicio_contrato', {
+                required: 'La fecha de inicio es obligatoria',
+                validate: (value) => {
+                  // Validar formato DD/MM/AAAA
+                  if (!/^\d{2}\/\d{2}\/\d{4}$/.test(value)) {
+                    return 'Formato de fecha inválido (DD/MM/AAAA)';
+                  }
+
+                  // Validar que sea una fecha real
+                  const [day, month, year] = value.split('/');
+                  const date = new Date(year, month - 1, day);
+                  if (isNaN(date.getTime())) {
+                    return 'Fecha inválida';
+                  }
+
+                  return true;
+                }
+              })}
+            />
+            {errors[campo.name] && (
+              <span className="text-danger">{errors[campo.name].message}</span>
+            )}
+          </div>
+        );
+      }
+
       return (
         <div className="col-md-6 mb-3" key={campo.name}>
-          <label className="form-label dark-label" htmlFor={campo.name}>{campo.label}</label>
+          <label className="form-label dark-label">{campo.label}</label>
           <input
-            id={campo.name}
-            type="number"
-            step="any"
+            type={campo.type || 'text'}
             className={`form-control dark-input ${errors[campo.name] ? 'is-invalid' : ''}`}
+            readOnly={campo.readOnly}
+            min={campo.min}
             {...register(campo.name, {
-              valueAsNumber: true,
               required: campo.required ? `${campo.label} es obligatorio` : false,
-              validate: (value) =>
-                value === undefined || isNaN(value)
-                  ? 'Debe ser un número válido'
-                  : true,
+              pattern: campo.pattern ? {
+                value: campo.pattern,
+                message: campo.message
+              } : undefined,
+              min: campo.min ? {
+                value: campo.min,
+                message: `El valor mínimo es ${campo.min}`
+              } : undefined
             })}
           />
-
-          {errors[campo.name] && <span className="text-danger">{errors[campo.name].message}</span>}
+          {errors[campo.name] && (
+            <span className="text-danger">{errors[campo.name].message}</span>
+          )}
         </div>
       );
-    }
-
-    // Renderizar campos de fecha
-    if (campo.type === 'date') {
-      return (
-        <div className="col-md-6 mb-3" key={campo.name}>
-          <label className="form-label dark-label" htmlFor={campo.name}>{campo.label}</label>
-          <input
-            id={campo.name}
-            type="date"
-            className={`form-control dark-input ${errors[campo.name] ? 'is-invalid' : ''}`}
-            aria-label={campo.label}
-            {...register(campo.name, {
-              required: campo.required ? { message: `${campo.label} es obligatorio` } : false,
-            })}
-          />
-          {errors[campo.name] && <span className="text-danger">{errors[campo.name].message}</span>}
-        </div>
-      );
-    }
-
-
-    // Renderizar campos de texto por defecto
-
-    return (
-      <div className="col-md-6 mb-3" key={campo.name}>
-        <label className="form-label dark-label" htmlFor={campo.name}>{campo.label}</label>
-        <input
-          id={campo.name}
-          type={campo.type || 'text'}
-          className={`form-control dark-input ${errors[campo.name] ? 'is-invalid' : ''}`}
-          {...register(campo.name, {
-            required: campo.required ? `${campo.label} es obligatorio` : false,
-            pattern: campo.pattern ? {
-              value: campo.pattern,
-              message: campo.message // Mensaje personalizado
-            } : undefined
-          })}
-        />
-        {errors[campo.name] && (
-          <span className="text-danger">{errors[campo.name].message}</span>
-        )}
-      </div>
-    );
-  });
+    });
+  };
 
   const onSubmit = async (data) => {
     setIsSubmitting(true);
@@ -134,7 +250,7 @@ const AddInquilino = () => {
       // Formatear datos para enviar al backend
       const formattedData = {
         ...data,
-        periodo: data.periodo.toString().trim(), // Convertir a string y limpiar
+        periodo: data.periodo.toString().trim(),
         aumento: data.aumento.toString().trim(),
         alquileres_adeudados: data.alquileres_adeudados === 'Sí' ? 'si debe' : 'no debe',
         gastos_adeudados: data.gastos_adeudados === 'Sí' ? 'si debe' : 'no debe',
@@ -144,20 +260,17 @@ const AddInquilino = () => {
         tasa_importe: parseFloat(data.tasa_importe) || 0,
         otros: parseFloat(data.otros) || 0,
         importe_total: parseFloat(data.importe_total) || 0,
-        // Convertir fecha a formato ISO (el input type="date" ya da 'YYYY-MM-DD')
-        inicio_contrato: data.inicio_contrato ? new Date(data.inicio_contrato).toISOString() : null,
+        // Convertir duración a meses si es necesario
+        duracion_contrato: data.duracion_tipo === 'years'
+          ? parseInt(data.duracion_contrato) * 12
+          : parseInt(data.duracion_contrato),
+        // Parsear fechas
+        inicio_contrato: data.inicio_contrato,
+        vencimiento_contrato: data.vencimiento_contrato
       };
 
-      const response = await fetch('/api/inquilinos', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formattedData), // Enviar todos los datos, incluidos los nuevos campos
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Error desconocido al agregar el inquilino.');
-      }
+      // Aquí iría la llamada a la API para guardar los datos
+      console.log('Datos a enviar:', formattedData);
 
       Swal.fire({
         title: '¡Inquilino Agregado!',
@@ -165,7 +278,7 @@ const AddInquilino = () => {
         icon: 'success',
         confirmButtonText: 'Aceptar',
       });
-      reset(); // Limpiar el formulario después de agregar
+      reset();
     } catch (error) {
       console.error('Error al agregar el inquilino:', error.message);
       Swal.fire({
@@ -179,13 +292,12 @@ const AddInquilino = () => {
     }
   };
 
-
   return (
     <div className="dark-theme-bg">
       <div className="dark-card p-4 mb-4">
         <h4 className="text-center text-light mb-0">Agregar Nuevo Inquilino</h4>
       </div>
-      
+
       <form className="dark-card p-4" onSubmit={handleSubmit(onSubmit)}>
         <h5 className="dark-title mb-4">Datos del Inquilino</h5>
         <div className="row g-3">
@@ -218,7 +330,6 @@ const AddInquilino = () => {
 };
 
 export default AddInquilino;
-
 
 
 

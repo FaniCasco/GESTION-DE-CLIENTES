@@ -2,14 +2,32 @@ import React from 'react';
 import { format, parseISO } from 'date-fns';
 
 const formatDate = (dateString) => {
-  if (!dateString) return '';
-  return format(parseISO(dateString), 'dd/MM/yyyy');
+  if (!dateString) return 'N/A';
+  
+  try {
+    // Si ya está en formato DD/MM/AAAA
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateString)) {
+      return dateString;
+    }
+    
+    // Si es una fecha ISO
+    if (dateString.includes('T')) {
+      return format(parseISO(dateString), 'dd/MM/yyyy');
+    }
+    
+    // Si es otra fecha (como timestamp o string sin formato)
+    const date = new Date(dateString);
+    if (!isNaN(date.getTime())) {
+      return format(date, 'dd/MM/yyyy');
+    }
+    
+    return 'N/A';
+  } catch {
+    return 'N/A';
+  }
 };
 
 const ModalInquilino = ({ selectedInquilino }) => {
-  console.log('Dentro de ModalInquilino - selectedInquilino:', selectedInquilino);
-  console.log('Dentro de ModalInquilino - importe_total:', selectedInquilino?.importe_total);
-
   if (!selectedInquilino) {
     return (
       <div className="modal-content p-3">
@@ -19,12 +37,15 @@ const ModalInquilino = ({ selectedInquilino }) => {
     );
   }
 
+  // Asegúrate de incluir vencimiento_contrato en los campos relevantes
   const camposRelevantes = [
     'nombre',
     'apellido',
     'telefono',
-    'direccion',
+    'propietario_direccion',
     'inicio_contrato',
+    'vencimiento_contrato',  // Asegúrate de que esté incluido
+    'duracion_contrato',
     'periodo',
     'contrato',
     'aumento',
@@ -39,14 +60,19 @@ const ModalInquilino = ({ selectedInquilino }) => {
   ];
 
   const formatValue = (key, value) => {
-    if (key === 'inicio_contrato' && value) {
+    // Manejar campos de fecha
+    if (key.includes('contrato')) {
       return formatDate(value);
     }
 
-    // Campos numéricos expandidos
+    if (key === 'alquileres_adeudados' || key === 'gastos_adeudados') {
+      return value === 'si debe' ? 'Sí' : 'No';
+    }
+
+    // Campos numéricos
     const numericFields = [
       'alquileres_importe', 'agua_importe', 'luz_importe',
-      'tasa_importe', 'otros', 'importe_total'
+      'tasa_importe', 'otros', 'importe_total', 'duracion_contrato'
     ];
 
     if (numericFields.includes(key)) {
@@ -57,27 +83,22 @@ const ModalInquilino = ({ selectedInquilino }) => {
     return value || 'N/A';
   };
 
-  // Depuración
-  console.log('Fecha desde el backend:', selectedInquilino?.inicio_contrato);
-  console.log('Fecha después de formatear:', formatValue('inicio_contrato', selectedInquilino?.inicio_contrato));
-
   return (
-    <div className="modal-content p-3" role="dialog" aria-labelledby="modal-title" aria-describedby="modal-description">
-      <h3 id="modal-title" className="mb-3">Detalles del Inquilino</h3>
-      <p id="modal-description" className="sr-only">Este modal muestra los detalles del inquilino seleccionado.</p>
+    <div className="modal-content p-3">
+      <h3 className="mb-3">Detalles del Inquilino</h3>
       <form>
         {camposRelevantes.map((key) => (
           <div className="mb-3" key={key}>
-            <label className="form-label fw-bold" htmlFor={key}>
-              {key.replace(/_/g, ' ')} {/* Reemplazar guiones bajos por espacios */}
+            <label className="form-label fw-bold">
+              {key.split('_').map(word => 
+                word.charAt(0).toUpperCase() + word.slice(1)
+              ).join(' ')}
             </label>
             <input
               type="text"
               className="form-control"
-              id={key}
               value={formatValue(key, selectedInquilino[key])}
               readOnly
-              aria-label={key.replace(/_/g, ' ')}
             />
           </div>
         ))}

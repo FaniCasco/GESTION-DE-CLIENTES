@@ -196,6 +196,42 @@ footer a:hover {
 }
 
 
+.custom-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.custom-table th, .custom-table td {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+
+.custom-table th {
+  background-color: #f2f2f2;
+  font-weight: bold;
+}
+.status-expired {
+  color: #dc3545;
+  font-weight: bold;
+}
+
+.status-danger {
+  color: #dc3545;
+}
+
+.status-warning {
+  color: #fd7e14;
+}
+
+.status-success {
+  color: #28a745;
+}
+
+.status-unknown {
+  color: #6c757d;
+}
+
 
 
 @media print {

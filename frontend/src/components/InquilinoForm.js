@@ -5,14 +5,42 @@ import { useForm } from 'react-hook-form';
 import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
+import InputMask from 'react-input-mask';
+import { format, isValid } from 'date-fns';
 
-const formatNumberWithDots = (number) => {
-  if (typeof number === 'string') {
-    number = number.replace(/\./g, '');
+// Convierte de Date a DD/MM/AAAA
+const formatDateToDisplay = (date) => {
+  if (!date) return '';
+  try {
+    // Asegurarnos de que es un objeto Date válido
+    const dateObj = date instanceof Date ? date : new Date(date);
+
+    // Usar UTC para evitar problemas de zona horaria
+    const utcDate = new Date(Date.UTC(
+      dateObj.getFullYear(),
+      dateObj.getMonth(),
+      dateObj.getDate()
+    ));
+
+    return isValid(utcDate) ? format(utcDate, 'dd/MM/yyyy') : '';
+  } catch {
+    return '';
   }
-  const num = Number(number);
-  return isNaN(num) ? '' : num.toLocaleString('es-AR');
 };
+
+const parseDateFromInput = (dateString) => {
+  if (!dateString || !/^\d{2}\/\d{2}\/\d{4}$/.test(dateString)) return null;
+  
+  try {
+    const [day, month, year] = dateString.split('/');
+    const date = new Date(year, month - 1, day);
+    return date.toISOString();
+  } catch {
+    return null;
+  }
+};
+
+
 
 const parseNumberWithoutDots = (value) => {
   if (typeof value !== 'string') return Number(value);
@@ -23,6 +51,28 @@ const numericFields = [
   'alquileres_importe', 'agua_importe', 'tasa_importe',
   'otros', 'luz_importe', 'importe_total'
 ];
+
+
+// Validador de fecha
+const validateDate = (value) => {
+  if (!value) return "La fecha es requerida";
+  if (!/^\d{2}\/\d{2}\/\d{4}$/.test(value)) return "Formato debe ser DD/MM/AAAA";
+
+  const [day, month, year] = value.split('/');
+  const date = new Date(year, month - 1, day);
+
+  if (isNaN(date.getTime())) return "Fecha inválida";
+
+  return true; // Eliminamos la validación de fecha futura
+};
+
+//const formatNumberWithDots = (number) => {
+//if (typeof number === 'string') {
+//number = number.replace(/\./g, '');
+//}
+//const num = Number(number);
+//return isNaN(num) ? '' : num.toLocaleString('es-AR');
+//};
 
 // --- COMPONENTE PRINCIPAL ---
 const InquilinoForm = () => {
@@ -47,57 +97,12 @@ const InquilinoForm = () => {
 
       try {
         const response = await api.get(`/inquilinos/${id}`);
-
         if (response.data) {
-          const dataFormateada = {};
-
-          Object.entries(response.data).forEach(([key, value]) => {
-            if (value === undefined || value === null) {
-              dataFormateada[key] = '';
-              return;
-            }
-
-            // 🔸 Fecha
-            if (key === 'inicio_contrato') {
-              const fecha = new Date(value);
-              dataFormateada[key] = !isNaN(fecha.getTime())
-                ? `${String(fecha.getDate()).padStart(2, '0')}/${String(fecha.getMonth() + 1).padStart(2, '0')}/${fecha.getFullYear()}`
-                : '';
-              return;
-            }
-
-            // 🔸 Booleanos tipo texto
-            if (key === 'alquileres_adeudados' || key === 'gastos_adeudados') {
-              dataFormateada[key] = value === 'si debe' ? 'Sí' : 'No';
-              return;
-            }
-
-            // 🔸 Campos numéricos
-            if (numericFields.includes(key) && !key.toLowerCase().includes('telefono')) {
-              let numberValue;
-              if (typeof value === 'string') {
-                numberValue = parseNumberWithoutDots(value);
-              } else if (typeof value === 'number') {
-                numberValue = value;
-              } else {
-                numberValue = NaN;
-              }
-
-              dataFormateada[key] = isNaN(numberValue) ? '' : formatNumberWithDots(numberValue);
-              return;
-            }
-
-            // 🔸 Campos específicos como aumento y periodo
-            if (key === 'aumento' || key === 'periodo') {
-              dataFormateada[key] = value?.toString() || '';
-              return;
-            }
-
-            // 🔸 Resto de campos
-            dataFormateada[key] = value;
-          });
-
-          reset(dataFormateada); // ✅ esto evita usar muchos setValue y evita errores de input bloqueado
+          const dataFormateada = {
+            ...response.data,
+            inicio_contrato: formatDateToDisplay(response.data.inicio_contrato)
+          };
+          reset(dataFormateada);
         }
       } catch (err) {
         console.error('Error al cargar el inquilino:', err);
@@ -114,75 +119,67 @@ const InquilinoForm = () => {
   }, [id, reset]);
 
 
-
   // Función para manejar el envío del formulario
 
   const onSubmit = async (data) => {
     setIsSubmitting(true);
-    // Normalizar campos de deuda
-    ['alquileres_adeudados', 'gastos_adeudados'].forEach((campo) => {
-      const valor = (data[campo] || '').toString().trim().toLowerCase();
-      if (valor === 'sí' || valor === 'si') {
-        data[campo] = 'Sí';
-      } else if (valor === 'no') {
-        data[campo] = 'No';
-      } else {
-        // Por si el usuario pone algo inválido manualmente
-        throw new Error("Valores inválidos para campos de deuda. Use 'Sí' o 'No'");
-      }
-    });
-    console.log('Datos crudos del formulario:', data); // Ver qué llegó
 
-    const formattedData = {};
-    const camposObligatorios = ['nombre', 'apellido', 'telefono', 'periodo', 'contrato', 'inicio_contrato'];
+    const formatFieldName = (fieldName) => {
+  return fieldName
+    .split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
 
-    Object.entries(data).forEach(([key, value]) => {
-      // Si el campo está vacío
-      if (value === '' || value === undefined || value === null) {
-        if (camposObligatorios.includes(key)) {
-          formattedData[key] = ''; // No null para obligatorios
-        } else {
-          formattedData[key] = null;
-        }
-        return;
-      }
-
-      // --- Formateos especiales ---
-      if (key === 'inicio_contrato') {
-        if (/^\d{2}\/\d{2}\/\d{4}$/.test(value)) {
-          const [day, month, year] = value.split('/');
-          const date = new Date(Date.UTC(year, month - 1, day));
-          formattedData[key] = !isNaN(date.getTime()) ? date.toISOString() : null;
-        } else {
-          formattedData[key] = null;
-        }
-
-      } else if (key === 'alquileres_adeudados' || key === 'gastos_adeudados') {
-        formattedData[key] = value === 'Sí' ? 'si debe' : 'no debe';
-      } else if (numericFields.includes(key)) {
-        const parsed = parseNumberWithoutDots(value);
-        formattedData[key] = isNaN(parsed) ? null : parsed;
-      } else if (key === 'aumento' || key === 'periodo') {
-        formattedData[key] = value.toString();
-      } else {
-        formattedData[key] = value;
-      }
-    });
-
-    // Verificación manual de campos obligatorios
+    // Verificación de campos obligatorios primero
+    const camposObligatorios = ['nombre', 'apellido', 'telefono', 'periodo', 'contrato', 'inicio_contrato', 'vencimiento_contrato'];
     for (const campo of camposObligatorios) {
-      if (!formattedData[campo] || formattedData[campo] === '') {
-        console.error(`Falta el campo obligatorio: ${campo}`);
+      if (!data[campo]) {
         Swal.fire({
           title: 'Error',
-          text: `Falta completar el campo obligatorio: ${campo}`,
-          icon: 'error',
-          confirmButtonText: 'Aceptar',
+          text: `El campo ${formatFieldName(campo)} es obligatorio`,
+          icon: 'error'
         });
         setIsSubmitting(false);
         return;
       }
     }
+
+    // Preparar datos para enviar
+    const formattedData = { ...data };
+
+    // Convertir fechas (sin validar si son pasadas)
+    formattedData.inicio_contrato = parseDateFromInput(data.inicio_contrato);
+    formattedData.vencimiento_contrato = parseDateFromInput(data.vencimiento_contrato);
+    // Eliminar duracion_contrato ya que no lo usaremos más
+    delete formattedData.duracion_contrato;
+
+    // Normalizar campos de deuda
+    ['alquileres_adeudados', 'gastos_adeudados'].forEach((campo) => {
+      const valor = (data[campo] || '').toString().trim().toLowerCase();
+      if (valor === 'sí' || valor === 'si') {
+        formattedData[campo] = 'si debe';
+      } else if (valor === 'no') {
+        formattedData[campo] = 'no debe';
+      }
+    });
+
+    // Convertir campos numéricos
+    numericFields.forEach((campo) => {
+      if (formattedData[campo] !== undefined && formattedData[campo] !== null && formattedData[campo] !== '') {
+        const parsed = parseNumberWithoutDots(formattedData[campo]);
+        formattedData[campo] = isNaN(parsed) ? null : parsed;
+      } else {
+        formattedData[campo] = null;
+      }
+    });
+
+    // Convertir fecha
+    formattedData.inicio_contrato = parseDateFromInput(data.inicio_contrato);
+
+    // Campos específicos
+    if (formattedData.aumento) formattedData.aumento = formattedData.aumento.toString();
+    if (formattedData.periodo) formattedData.periodo = formattedData.periodo.toString();
 
     console.log('Datos enviados al backend:', formattedData);
 
@@ -202,8 +199,8 @@ const InquilinoForm = () => {
         confirmButtonText: 'Aceptar',
       });
 
-      if (!id) reset(); // Limpiar si es nuevo
-      navigate('/inquilinos'); // Redirigir
+      if (!id) reset();
+      navigate('/inquilinos');
     } catch (err) {
       console.error('Error al guardar los datos:', err.response?.data || err.message);
       const errorMessage = err.response?.data?.message || 'Hubo un problema al guardar los datos del inquilino. Inténtalo nuevamente.';
@@ -217,6 +214,7 @@ const InquilinoForm = () => {
       setIsSubmitting(false);
     }
   };
+
 
 
   const handleCancel = () => {
@@ -238,7 +236,8 @@ const InquilinoForm = () => {
     { label: 'Teléfono', name: 'telefono', required: true },
     { label: 'Periodo', name: 'periodo', required: true },
     { label: 'Contrato', name: 'contrato', required: true },
-    { label: 'Inicio del Contrato', name: 'inicio_contrato', required: true, type: 'date' },
+    { label: 'Inicio del Contrato', name: 'inicio_contrato', required: true, type: 'text' },
+    { label: 'Fin del Contrato', name: 'vencimiento_contrato', required: true, type: 'text' },
     { label: 'Aumento', name: 'aumento', required: true },
   ];
 
@@ -284,6 +283,8 @@ const InquilinoForm = () => {
     { label: 'Luz', name: 'luz_importe' },
     { label: 'Importe Total', name: 'importe_total' },
   ];
+
+
 
   // --- Función para Renderizar Campos ---
   const renderCampos = (campos) =>
@@ -332,20 +333,19 @@ const InquilinoForm = () => {
           </div>
         );
       }
-      if (campo.name === 'inicio_contrato') {
+
+      if (campo.name === 'inicio_contrato' || campo.name === 'vencimiento_contrato') {
         return (
           <div className="col-md-6 mb-3" key={campo.name}>
             <label className="form-label">{campo.label}</label>
-            <input
-              type="text"
-              className={`form-control ${errors[campo.name] ? 'is-invalid' : ''}`}
+            <InputMask
+              mask="99/99/9999"
+              maskChar={null}
               placeholder="DD/MM/AAAA"
+              className={`form-control ${errors[campo.name] ? 'is-invalid' : ''}`}
               {...register(campo.name, {
                 required: campo.required ? `${campo.label} es obligatorio` : false,
-                pattern: {
-                  value: /^\d{2}\/\d{2}\/\d{4}$/,
-                  message: 'El formato debe ser DD/MM/AAAA',
-                },
+                validate: validateDate // Solo validamos formato, no fecha futura
               })}
             />
             {errors[campo.name] && (
@@ -354,10 +354,9 @@ const InquilinoForm = () => {
           </div>
         );
       }
-
-
       // Por defecto, input común
       return (
+
         <div className="col-md-6 mb-3" key={campo.name}>
           <label className="form-label" htmlFor={campo.name}>{campo.label}</label>
           <input
@@ -386,7 +385,9 @@ const InquilinoForm = () => {
             <span className="text-danger">{errors[campo.name].message}</span>
           )}
         </div>
+
       );
+
     });
 
 
