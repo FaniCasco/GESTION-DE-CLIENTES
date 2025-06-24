@@ -69,12 +69,9 @@
 
 .btn-metal {
   background: linear-gradient(182deg, #6ac5fd, #000408);
-  /* Azul oscuro con sombra metálica */
   color: #FFFFFF;
-  /* Texto blanco para contraste */
   border: none;
   border-radius: 50px;
-  /* Botón redondeado */
   padding: 12px 24px;
   font-size: 16px;
   font-family: 'Poppins', sans-serif;
@@ -132,6 +129,7 @@
   color: white;
   font-weight: bold;
 }
+
 .btn-danger:hover {
   background-color: #da1818;
   color: white;
@@ -178,21 +176,28 @@ footer a:hover {
   color: #fff;
   border-color: #337ab7;
 }
+
 .search-container {
-  position: relative; /* Necesario para posicionar el icono */
+  position: relative;
+  /* Necesario para posicionar el icono */
 }
 
 .search-icon {
   position: absolute;
   top: 50%;
-  left: 10px; /* Ajusta la posición horizontal */
-  transform: translateY(-50%); /* Centra verticalmente el icono */
-  font-size: 1.2rem; /* Ajusta el tamaño del icono */
-  color: #777; /* Ajusta el color del icono */
+  left: 10px;
+  /* Ajusta la posición horizontal */
+  transform: translateY(-50%);
+  /* Centra verticalmente el icono */
+  font-size: 1.2rem;
+  /* Ajusta el tamaño del icono */
+  color: #777;
+  /* Ajusta el color del icono */
 }
 
 .form-control {
-  padding-left: 35px; /* Ajusta el valor según el tamaño del icono y el padding deseado */
+  padding-left: 35px;
+  /* Ajusta el valor según el tamaño del icono y el padding deseado */
 }
 
 
@@ -201,7 +206,8 @@ footer a:hover {
   border-collapse: collapse;
 }
 
-.custom-table th, .custom-table td {
+.custom-table th,
+.custom-table td {
   padding: 8px 12px;
   border: 1px solid #ddd;
   text-align: left;
@@ -211,6 +217,7 @@ footer a:hover {
   background-color: #f2f2f2;
   font-weight: bold;
 }
+
 .status-expired {
   color: #dc3545;
   font-weight: bold;
@@ -232,7 +239,98 @@ footer a:hover {
   color: #6c757d;
 }
 
+.btn-imprimir-todo {
+  background: linear-gradient(145deg, rgb(94, 132, 245), #0252c1);
+  color: white;
+  border: none;
+  border-radius: 50px;
+  padding: 10px 24px;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  box-shadow:
+    0 4px 6px rgba(0, 0, 0, 0.1),
+    0 1px 3px rgba(0, 0, 0, 0.08),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.2),
+    inset 0 2px 4px rgba(255, 255, 255, 0.1);
+}
 
+.btn-imprimir-todo:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 6px 8px rgba(0, 0, 0, 0.1),
+    0 2px 4px rgba(0, 0, 0, 0.08),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.2),
+    inset 0 4px 8px rgba(255, 255, 255, 0.093);
+  background: linear-gradient(145deg, #275696, #0545f5);
+  color: white;
+}
+
+.btn-imprimir-todo:active {
+  transform: translateY(1px);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.1),
+    0 1px 2px rgba(0, 0, 0, 0.08),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.2),
+    inset 0 2px 4px rgba(255, 255, 255, 0.5);
+    
+}
+
+.btn-imprimir-todo i {
+  margin-right: 8px;
+  transition: transform 0.4s ease;
+  
+}
+
+.btn-imprimir-todo:hover i {
+  transform: rotate(360deg);
+  color: white;
+}
+
+.btn-periodo {
+  background: linear-gradient(145deg, #28a745, #175c25);
+  color: white;
+  border: none;
+  border-radius: 50px;
+  padding: 10px 24px;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  box-shadow:
+    0 4px 6px rgba(0, 0, 0, 0.1),
+    0 1px 3px rgba(0, 0, 0, 0.08),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.2),
+    inset 0 2px 4px rgba(255, 255, 255, 0.1);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-periodo:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 7px 14px rgba(0, 0, 0, 0.15),
+    0 3px 6px rgba(0, 0, 0, 0.1),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.25),
+    inset 0 3px 6px rgba(255, 255, 255, 0.15);
+  background: linear-gradient(145deg, #34ce57, #28a745);
+}
+
+.btn-periodo:active {
+  transform: translateY(1px);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.1),
+    inset 0 3px 5px rgba(0, 0, 0, 0.2);
+}
+
+.btn-periodo i {
+  margin-right: 8px;
+  transition: transform 0.4s ease;
+}
+
+.btn-periodo:hover i {
+  transform: rotate(360deg);
+}
 
 @media print {
   .no-print {
@@ -246,4 +344,3 @@ footer a:hover {
     box-shadow: none;
   }
 }
-

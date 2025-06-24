@@ -14,6 +14,7 @@ import InputMask from 'react-input-mask';
 import { getCurrentPeriodo } from '../utils/periodoUtils';
 
 
+
 Modal.setAppElement('#root');
 
 const InquilinosList = () => {
@@ -68,50 +69,52 @@ const InquilinosList = () => {
     if (!timeRemaining) {
       return {
         status: 'unknown',
-        color: '#6c757d', // Gris
-        text: 'Sin fecha',
-        icon: 'bi bi-question-circle'
+        color: '#6c757d',
+        text: 'SIN FECHA',
+        icon: 'bi bi-question-circle',
+        fontWeight: 'normal'
       };
     }
 
     if (timeRemaining.expired) {
       return {
         status: 'expired',
-        color: '#dc3545', // Rojo
+        color: '#dc3545',
         text: 'VENCIDO',
-        icon: 'bi bi-exclamation-triangle'
+        icon: 'bi bi-exclamation-triangle',
+        fontWeight: 'bold'
       };
     }
 
-    // Menos de 1 mes (30 días) - ROJO
     if (timeRemaining.totalDays <= 30) {
       return {
         status: 'danger',
         color: '#dc3545',
         text: timeRemaining.days === 1 ? 'VENCE MAÑANA' : `VENCE EN ${timeRemaining.days} DÍAS`,
-        icon: 'bi bi-exclamation-triangle'
+        icon: 'bi bi-exclamation-triangle',
+        fontWeight: 'bold'
       };
     }
 
-    // Menos de 1 año (365 días) - NARANJA/VERDE
     if (timeRemaining.totalDays <= 365) {
       const months = timeRemaining.months + (timeRemaining.years * 12);
       return {
         status: months <= 2 ? 'warning' : 'success',
         color: months <= 2 ? '#fd7e14' : '#28a745',
         text: months === 1 ? '1 MES' : `${months} MESES`,
-        icon: months <= 2 ? 'bi bi-exclamation-circle' : 'bi bi-check-circle'
+        icon: months <= 2 ? 'bi bi-exclamation-circle' : 'bi bi-check-circle',
+        fontWeight: 'bold' // Texto siempre en negrita para este caso
       };
     }
 
-    // Más de 1 año - VERDE
     return {
       status: 'success',
       color: '#28a745',
       text: timeRemaining.years === 1 ?
         `1 AÑO ${timeRemaining.months} MESES` :
         `${timeRemaining.years} AÑOS ${timeRemaining.months} MESES`,
-      icon: 'bi bi-check-circle'
+      icon: 'bi bi-check-circle',
+      fontWeight: 'bold'
     };
   };
 
@@ -381,20 +384,20 @@ const InquilinosList = () => {
 
   // eslint-disable-next-line no-unused-vars
   const handleUpdatePeriodo = async () => {
-  const nuevoPeriodo = getCurrentPeriodo();
-  
-  if (window.confirm(`¿Actualizar período a ${nuevoPeriodo} para TODOS los inquilinos?`)) {
-    try {
-      await api.post('/inquilinos/update-periodo', {
-        periodo: nuevoPeriodo
-      });
-      refetch();
-      Swal.fire('Éxito', `Período actualizado a ${nuevoPeriodo}`, 'success');
-    } catch (error) {
-      Swal.fire('Error', error.response?.data?.error || error.message, 'error');
+    const nuevoPeriodo = getCurrentPeriodo();
+
+    if (window.confirm(`¿Actualizar período a ${nuevoPeriodo} para TODOS los inquilinos?`)) {
+      try {
+        await api.post('/inquilinos/update-periodo', {
+          periodo: nuevoPeriodo
+        });
+        refetch();
+        Swal.fire('Éxito', `Período actualizado a ${nuevoPeriodo}`, 'success');
+      } catch (error) {
+        Swal.fire('Error', error.response?.data?.error || error.message, 'error');
+      }
     }
-  }
-};
+  };
   const onSubmit = async (data) => {
     setIsSubmitting(true);
 
@@ -1357,25 +1360,66 @@ https://postimg.cc/mPst7Kzn
           />
         </div>
         <button
-          className="btn btn-primary ms-3"
+          className="btn btn-imprimir-todo ms-3"
           onClick={() => handlePrintAll(filteredInquilinos)}
         >
           <i className="bi bi-printer me-2"></i>
           Imprimir Todos
         </button>
         <button
-          className="btn btn-warning ms-2"
+          className="btn btn-periodo ms-2"
           onClick={async () => {
             const nuevoPeriodo = getCurrentPeriodo();
-            if (window.confirm(`¿Actualizar período a ${nuevoPeriodo} para TODOS los inquilinos?`)) {
+
+            // Mostrar confirmación con SweetAlert
+            const { isConfirmed } = await Swal.fire({
+              title: '¿Confirmar actualización?',
+              html: `¿Deseas actualizar el período a <b>${nuevoPeriodo}</b> para TODOS los inquilinos?`,
+              icon: 'question',
+              showCancelButton: true,
+              confirmButtonText: 'Sí, actualizar',
+              cancelButtonText: 'Cancelar',
+              confirmButtonColor: '#3085d6',
+              cancelButtonColor: '#d33',
+              reverseButtons: true
+            });
+
+            if (isConfirmed) {
               try {
-                await api.post('/inquilinos/update-periodo', {
-                  periodo: nuevoPeriodo
+                // Mostrar loader mientras se procesa
+                Swal.fire({
+                  title: 'Actualizando...',
+                  html: 'Por favor espera mientras se actualizan los períodos',
+                  allowOutsideClick: false,
+                  didOpen: () => {
+                    Swal.showLoading();
+                  }
                 });
-                refetch();
-                Swal.fire('Éxito', `Período actualizado a ${nuevoPeriodo}`, 'success');
+
+                // Hacer la petición a la API
+                await api.post('/inquilinos/update-periodo', { periodo: nuevoPeriodo });
+
+                // Refrescar los datos
+                await refetch();
+
+                // Mostrar confirmación de éxito
+                Swal.fire({
+                  title: '¡Éxito!',
+                  html: `Período actualizado a <b>${nuevoPeriodo}</b> correctamente`,
+                  icon: 'success',
+                  timer: 2000,
+                  timerProgressBar: true,
+                  showConfirmButton: false
+                });
               } catch (error) {
-                Swal.fire('Error', error.message, 'error');
+                // Mostrar error detallado
+                Swal.fire({
+                  title: 'Error',
+                  html: `No se pudo actualizar el período:<br><b>${error.response?.data?.message || error.message}</b>`,
+                  icon: 'error',
+                  confirmButtonText: 'Entendido'
+                });
+                console.error('Error al actualizar período:', error);
               }
             }
           }}
@@ -1404,7 +1448,31 @@ https://postimg.cc/mPst7Kzn
           {paginatedInquilinos?.map((inquilino, index) => {
             const timeRemaining = calculateTimeRemaining(inquilino.vencimiento_contrato);
             const contractStatus = getContractStatus(timeRemaining);
-            return (<tr key={inquilino.id}><td>{currentPage * inquilinosPerPage + index + 1}</td><td>{inquilino.apellido || '-'}</td><td>{inquilino.nombre || '-'}</td><td>{inquilino.telefono || '-'}</td><td>{inquilino.propietario_direccion || '-'}</td><td>{formatDate(inquilino.inicio_contrato) || '-'}</td><td>{formatDate(inquilino.vencimiento_contrato) || '-'}</td><td><div style={{ display: 'flex', alignItems: 'center' }}><i className={`${contractStatus.icon} me-2`} style={{ color: contractStatus.color }}></i><span style={{ color: contractStatus.color, fontWeight: contractStatus.status === 'expired' ? 'bold' : 'normal' }}>{contractStatus.text}</span></div></td><td><button className="btn btn-sm me-2" style={{ backgroundColor: '#17a2b8', color: '#fff' }} onClick={() => handleViewClick(inquilino)}><i className="bi bi-eye"></i></button><button className="btn btn-sm me-2" style={{ backgroundColor: '#007bff', color: '#fff' }} onClick={() => handleEditClick(inquilino)}><i className="bi bi-pencil"></i></button><button className="btn btn-sm me-2" style={{ backgroundColor: '#dc3545', color: '#fff' }} onClick={() => handleDeleteClick(inquilino.id)}><i className="bi bi-trash"></i></button><button className="btn btn-sm me-2" style={{ backgroundColor: '#7028a7', color: '#fff' }} onClick={() => handlePrint(inquilino)}><i className="bi bi-printer"></i></button><button className="btn btn-sm me-2" style={{ backgroundColor: '#05933a', color: '#fff' }} onClick={() => handleSendWhatsApp(inquilino)}><i className="bi bi-whatsapp"></i></button><button className="btn btn-sm me-2" style={{ backgroundColor: '#28a745', color: '#fff' }} onClick={() => handleSaveReceipt(inquilino)} title="Guardar recibo"><i className="bi bi-save"></i></button></td></tr>);
+            return (
+              <tr key={inquilino.id}>
+                <td>{currentPage * inquilinosPerPage + index + 1}</td>
+                <td>{inquilino.apellido || '-'}</td>
+                <td>{inquilino.nombre || '-'}</td>
+                <td>{inquilino.telefono || '-'}</td>
+                <td>{inquilino.propietario_direccion || '-'}</td>
+                <td>{formatDate(inquilino.inicio_contrato) || '-'}</td>
+                <td>{formatDate(inquilino.vencimiento_contrato) || '-'}</td>
+                <td>
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <i className={`${contractStatus.icon} me-2`} style={{ color: contractStatus.color }}></i>
+                    <span style={{
+                      color: contractStatus.color,
+                      fontWeight: contractStatus.fontWeight // Usamos la propiedad definida
+                    }}>
+                      {contractStatus.text}
+                    </span>
+                  </div>
+                </td>
+                <td>
+                  <button className="btn btn-sm me-2" style={{ backgroundColor: '#17a2b8', color: '#fff' }} onClick={() => handleViewClick(inquilino)}>
+                    <i className="bi bi-eye"></i>
+                  </button>
+                  <button className="btn btn-sm me-2" style={{ backgroundColor: '#007bff', color: '#fff' }} onClick={() => handleEditClick(inquilino)}><i className="bi bi-pencil"></i></button><button className="btn btn-sm me-2" style={{ backgroundColor: '#dc3545', color: '#fff' }} onClick={() => handleDeleteClick(inquilino.id)}><i className="bi bi-trash"></i></button><button className="btn btn-sm me-2" style={{ backgroundColor: '#7028a7', color: '#fff' }} onClick={() => handlePrint(inquilino)}><i className="bi bi-printer"></i></button><button className="btn btn-sm me-2" style={{ backgroundColor: '#05933a', color: '#fff' }} onClick={() => handleSendWhatsApp(inquilino)}><i className="bi bi-whatsapp"></i></button><button className="btn btn-sm me-2" style={{ backgroundColor: '#e7bd02', color: 'black' }} onClick={() => handleSaveReceipt(inquilino)} title="Guardar recibo"><i className="bi bi-save"></i></button></td></tr>);
           })}
         </tbody>
       </table>
