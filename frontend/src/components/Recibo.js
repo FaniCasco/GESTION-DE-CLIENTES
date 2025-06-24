@@ -1,6 +1,6 @@
 import React, { useRef, useEffect } from 'react';
 import logo from '../assets/img/logo.png'; // Ajusta la ruta según tu estructura de archivos
-
+import firma from '../assets/img/firma.png';
 const Recibo = React.forwardRef(({ inquilino }, ref) => {
   const reciboRef = useRef(null); // Referencia al div que contiene el recibo
 
@@ -160,7 +160,16 @@ const Recibo = React.forwardRef(({ inquilino }, ref) => {
           <div className="row text-center mt-4">
             <div className="col-6">
               <p className="mb-1">Firma del Propietario</p>
-              <div style={{ borderBottom: "1px solid #000", height: "2rem" }}></div>
+              <div className="col-md-4 text-center mb-3">
+              <img
+                src={firma}
+                alt="Firma digital"
+                style={{
+                  width: "130px",
+                  height: "auto",
+                }}
+              />
+            </div>
             </div>
             <div className="col-6">
               <p className="mb-1">Firma del Inquilino</p>

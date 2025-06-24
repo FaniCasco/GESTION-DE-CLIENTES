@@ -5,6 +5,7 @@ import { useInquilinos } from '../features/inquilinos/useInquilinos';
 import Modal from 'react-modal';
 import { useForm } from 'react-hook-form';
 import logo from '../assets/img/logo.png';
+//import firma from '../assets/img/firma.png';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import 'sweetalert2/dist/sweetalert2.min.css';
@@ -831,7 +832,7 @@ const InquilinosList = () => {
         <div class="col-6">
           <div class="firma-digital" style="height: 80px;">
             <!-- Aquí va la firma digital como imagen -->
-            <img src="${window.location.origin}/assets/img/firma_digital.png" alt="Firma Digital" style="max-height: 80px;" />
+            <img src="${window.location.origin}/assets/img/firma.png" class="firma" alt="Firma Digital" style="max-height: 80px;" />
           </div>
           
           <p class="mt-1">Firma Inmobiliaria</p>
@@ -929,7 +930,7 @@ const InquilinosList = () => {
         <div class="col-6">
           <div class="firma-digital" style="height: 80px;">
             <!-- Aquí va la firma digital como imagen -->
-            <img src="${window.location.origin}/assets/img/firma_digital.png" alt="Firma Digital" style="max-height: 80px;" />
+            <img src="${window.location.origin}/assets/img/firma.png" class="firma" alt="Firma Digital" style="max-height: 80px;" />
           </div>
          
           <p class="mt-1">Firma Inmobiliaria</p>
@@ -1124,7 +1125,7 @@ const InquilinosList = () => {
           <div class="col-6">
             <div class="firma-digital" style="height: 80px;">
               <!-- Aquí va la firma digital como imagen -->
-              <img src="${window.location.origin}/assets/img/firma_digital.png" alt="Firma Digital" style="max-height: 80px;" />
+              <img src="${window.location.origin}/assets/img/firma.png" class="firma" alt="Firma Digital" style="max-height: 80px;" />
             </div>
            
             <p class="mt-1">Firma Inmobiliaria</p>
@@ -1201,7 +1202,7 @@ const InquilinosList = () => {
           <div class="col-6">
             <div class="firma-digital" style="height: 80px;">
               <!-- Aquí va la firma digital como imagen -->
-              <img src="${window.location.origin}/assets/img/firma_digital.png" alt="Firma Digital" style="max-height: 80px;" />
+              <img src="${window.location.origin}/assets/img/firma.png" class="firma" alt="Firma Digital" style="max-height: 80px;" />
             </div>
            
             <p class="mt-1">Firma Inmobiliaria</p>
