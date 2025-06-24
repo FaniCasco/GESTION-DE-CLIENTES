@@ -11,7 +11,7 @@ import 'sweetalert2/dist/sweetalert2.min.css';
 import Swal from 'sweetalert2';
 import ReactPaginate from 'react-paginate';
 import InputMask from 'react-input-mask';
-//import { parse, differenceInDays, format } from 'date-fns';
+import { getCurrentPeriodo } from '../utils/periodoUtils';
 
 
 Modal.setAppElement('#root');
@@ -21,7 +21,11 @@ const InquilinosList = () => {
     'alquileres_importe', 'agua_importe', 'luz_importe',
     'tasa_importe', 'importe_total', 'otros'
   ]);
-  const { data: inquilinos, isLoading, isError, error, refetch } = useInquilinos();
+  //const [watchValues, setWatchValues] = useState([]);
+  // eslint-disable-next-line no-unused-vars
+  const { register, handleSubmit, reset, control, setValue, watch, formState: { errors } } = useForm();
+  const { data: allInquilinos, isLoading, isError, error, refetch } = useInquilinos();
+  const [filteredInquilinos, setFilteredInquilinos] = useState([]);
   const [searchParams, setSearchParams] = useSearchParams();
   const searchTerm = searchParams.get('search') || '';
   const [currentPage, setCurrentPage] = useState(0);
@@ -29,8 +33,6 @@ const InquilinosList = () => {
   const [selectedInquilino, setSelectedInquilino] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { register, handleSubmit, reset } = useForm();
-
   const inquilinosPerPage = 6;
 
   const formatDate = (dateString) => {
@@ -56,7 +58,12 @@ const InquilinosList = () => {
     }
   };
 
-
+  const formatFieldName = (fieldName) => {
+    return fieldName
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
   const getContractStatus = (timeRemaining) => {
     if (!timeRemaining) {
       return {
@@ -205,9 +212,85 @@ const InquilinosList = () => {
     return isNaN(date.getTime()) ? null : date;
   };
 
+
+  // Agrega este useEffect al inicio de tus efectos
   useEffect(() => {
-    console.log('selectedInquilino actualizado:', selectedInquilino);
-  }, [selectedInquilino]);
+    if (allInquilinos) {
+      setFilteredInquilinos(allInquilinos);
+    }
+  }, [allInquilinos]);
+
+  useEffect(() => {
+    if (selectedInquilino) {
+      const formattedInquilino = {
+        ...selectedInquilino,
+        alquileres_importe: selectedInquilino.alquileres_importe || 0,
+        agua_importe: selectedInquilino.agua_importe || 0,
+        luz_importe: selectedInquilino.luz_importe || 0,
+        tasa_importe: selectedInquilino.tasa_importe || 0,
+        otros: selectedInquilino.otros || 0,
+        importe_total: selectedInquilino.importe_total || 0
+      };
+
+      numericFields.forEach(field => {
+        if (formattedInquilino[field] !== undefined) {
+          formattedInquilino[field] = new Intl.NumberFormat('es-AR').format(
+            parseNumberWithoutDots(formattedInquilino[field])
+          );
+        }
+      });
+
+      reset(formattedInquilino);
+      calculateTotal(formattedInquilino);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedInquilino, reset]);
+
+  const calculateTotal = (data) => {
+    const total = [
+      'alquileres_importe',
+      'agua_importe',
+      'luz_importe',
+      'tasa_importe',
+      'otros'
+    ].reduce((sum, field) => {
+      const value = data[field] || '0';
+      return sum + parseNumberWithoutDots(value);
+    }, 0);
+
+    setValue('importe_total', new Intl.NumberFormat('es-AR').format(total), {
+      shouldValidate: true,
+      shouldDirty: true
+    });
+  };
+
+  // Función mejorada para parsear números
+  const parseNumberWithoutDots = (value) => {
+    if (value === null || value === undefined) return 0;
+    if (typeof value === 'number') return value;
+
+    // Convertir formato argentino (1.234,56 => 1234.56)
+    const cleanedValue = value.toString()
+      .replace(/\./g, '')  // Eliminar puntos (separadores de miles)
+      .replace(',', '.');  // Convertir coma decimal a punto
+
+    const num = Number(cleanedValue);
+    return isNaN(num) ? 0 : num;
+  };
+
+
+
+  // Agrega este useEffect para recalcular cuando cambien los valores
+  useEffect(() => {
+    const subscription = watch((value, { name }) => {
+      if (name && numericFields.has(name) && name !== 'importe_total') {
+        calculateTotal(value);
+      }
+    });
+    return () => subscription.unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [watch]);
+
 
   const handleSearchChange = (e) => {
     setSearchParams({ search: e.target.value });
@@ -296,6 +379,22 @@ const InquilinosList = () => {
     }
   };
 
+  // eslint-disable-next-line no-unused-vars
+  const handleUpdatePeriodo = async () => {
+  const nuevoPeriodo = getCurrentPeriodo();
+  
+  if (window.confirm(`¿Actualizar período a ${nuevoPeriodo} para TODOS los inquilinos?`)) {
+    try {
+      await api.post('/inquilinos/update-periodo', {
+        periodo: nuevoPeriodo
+      });
+      refetch();
+      Swal.fire('Éxito', `Período actualizado a ${nuevoPeriodo}`, 'success');
+    } catch (error) {
+      Swal.fire('Error', error.response?.data?.error || error.message, 'error');
+    }
+  }
+};
   const onSubmit = async (data) => {
     setIsSubmitting(true);
 
@@ -350,6 +449,17 @@ const InquilinosList = () => {
   };
 
   const handleSaveReceipt = async (inquilino) => {
+    // eslint-disable-next-line no-unused-vars
+    const datosCompletos = {
+      ...inquilino,
+      alquileres_importe: inquilino.alquileres_importe || 0,
+      agua_importe: inquilino.agua_importe || 0,
+      luz_importe: inquilino.luz_importe || 0,
+      tasa_importe: inquilino.tasa_importe || 0,
+      otros: inquilino.otros || 0,
+      importe_total: inquilino.importe_total || 0
+    };
+
     try {
       // 1. Crear elemento temporal con dimensiones exactas
       const receiptElement = document.createElement('div');
@@ -452,8 +562,7 @@ const InquilinosList = () => {
           <!-- Columna 3 -->
           <div class="section">
             <div class="section-title">Otros Conceptos</div>
-            <div class="section-content">
-              ${inquilino.otros || '-'}
+            <div class="section-content">       
             </div>
           </div>
   
@@ -463,7 +572,7 @@ const InquilinosList = () => {
             <div class="section-content">
               Período:<br>${inquilino.periodo}<br><br>
               Contrato:<br>${inquilino.contrato}<br><br>
-              Duración de contrato:<br>${inquilino.duracion_contrato}<br><br>
+            
               Aumento:<br>${inquilino.aumento}<br><br>
               Estado: ${inquilino.alquileres_adeudados > 0 ? `${inquilino.alquileres_adeudados} meses adeudados` : 'Al día'}
             </div>
@@ -543,10 +652,15 @@ const InquilinosList = () => {
     }
   };
   const handlePrint = async (inquilino) => {
-    await preloadImage(logo);
+    try {
+      await preloadImage(logo);
 
-    const printWindow = window.open('', '_blank', 'height=900,width=1200');
-    const content = `
+      const printWindow = window.open('', '_blank', 'height=900,width=1200');
+      if (!printWindow) {
+        throw new Error('El navegador bloqueó la ventana emergente. Por favor, permite ventanas emergentes para este sitio.');
+      }
+
+      const content = `
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -684,7 +798,7 @@ const InquilinosList = () => {
           <ul class="list-group">
             <li class="list-group-item"><strong>Periodo:</strong> ${inquilino.periodo}</li>
             <li class="list-group-item"><strong>Contrato:</strong> ${inquilino.contrato}</li>
-            <li class="list-group-item"><strong>Duración de contrato:</strong> ${inquilino.duracion_contrato} meses</li>
+            
             <li class="list-group-item"><strong>Aumento:</strong> ${inquilino.aumento}</li>
             <li class="list-group-item"><strong>Estado:</strong> ${inquilino.alquileres_adeudados > 0 ? `${inquilino.alquileres_adeudados} meses adeudados` : 'Al día'}</li>
           </ul>
@@ -694,7 +808,7 @@ const InquilinosList = () => {
           <h5 class="fw-bold">Detalles de Liquidación</h5>
           <ul class="list-group">
               <li class="list-group-item"><strong>Alquileres:</strong> ${new Intl.NumberFormat('es-AR').format(inquilino.alquileres_importe)}</li>
-              <li class="list-group-item"><strong>Otros:</strong> ${inquilino.otros}</li>
+              <li class="list-group-item"><strong>Otros:</strong> ${new Intl.NumberFormat('es-AR').format(inquilino.otros)}</li>
           </ul>
         </div>
 
@@ -769,7 +883,7 @@ const InquilinosList = () => {
         <div class="col-4">
           <h5 class="fw-bold">Otros Conceptos</h5>
           <ul class="list-group">
-            <li class="list-group-item">Otros: ${inquilino.otros}</li>
+            <li class="list-group-item"></li>
           </ul>
         </div>
       </div>
@@ -780,7 +894,7 @@ const InquilinosList = () => {
           <ul class="list-group">
             <li class="list-group-item"><strong>Periodo:</strong> ${inquilino.periodo}</li>
             <li class="list-group-item"><strong>Contrato:</strong> ${inquilino.contrato}</li>
-            <li class="list-group-item"><strong>Duración de contrato:</strong> ${inquilino.duracion_contrato} meses</li>
+           
             <li class="list-group-item"><strong>Aumento:</strong> ${inquilino.aumento}</li>
             <li class="list-group-item"><strong>Estado:</strong> ${inquilino.alquileres_adeudados > 0 ? `${inquilino.alquileres_adeudados} meses adeudados` : 'Al día'}</li>
           </ul>
@@ -789,19 +903,21 @@ const InquilinosList = () => {
         <div class="col-4">
           <h5 class="fw-bold">Detalles de Liquidación</h5>
           <ul class="list-group">
-            <li class="list-group-item"><strong>Alquileres:</strong> ${inquilino.alquileres_importe}</li>
-            <li class="list-group-item"><strong>Otros:</strong> ${inquilino.otros}</li>
+       
+              <li class="list-group-item"><strong>Alquileres:</strong> ${new Intl.NumberFormat('es-AR').format(inquilino.alquileres_importe)}</li>
+              <li class="list-group-item"><strong>Otros:</strong> ${new Intl.NumberFormat('es-AR').format(inquilino.otros)}</li>
           </ul>
         </div>
 
         <div class="col-4">
           <h5 class="fw-bold">Impuestos</h5>
           <ul class="list-group">
-            <li class="list-group-item"><strong>Agua:</strong> ${inquilino.agua_importe}</li>
-            <li class="list-group-item"><strong>Luz:</strong> ${inquilino.luz_importe}</li>
-            <li class="list-group-item"><strong>Tasa:</strong> ${inquilino.tasa_importe}</li>
-            <li class="list-group-item"><strong>Total:</strong> ${inquilino.importe_total}</li>
-          </ul>
+             <ul class="list-group">
+            <li class="list-group-item"><strong>Agua:</strong> ${new Intl.NumberFormat('es-AR').format(inquilino.agua_importe)}</li>
+            <li class="list-group-item"><strong>Luz:</strong> ${new Intl.NumberFormat('es-AR').format(inquilino.luz_importe)}</li>
+            <li class="list-group-item"><strong>Tasa:</strong> ${new Intl.NumberFormat('es-AR').format(inquilino.tasa_importe)}</li>
+            <li class="list-group-item"><strong>Total:</strong> ${new Intl.NumberFormat('es-AR').format(inquilino.importe_total)}</li>
+          </ul> 
         </div>
       </div>
 
@@ -828,12 +944,21 @@ const InquilinosList = () => {
 
     `;
 
+      printWindow.document.write(content);
+      printWindow.document.close();
 
-    printWindow.document.write(content);
-    setTimeout(() => {
-      printWindow.print();
-    }, 500);
+      printWindow.onload = function () {
+        setTimeout(() => {
+          printWindow.focus(); // Enfocar la ventana
+          printWindow.print();
+        }, 300);
+      };
+    } catch (error) {
+      console.error('Error al imprimir:', error);
+      Swal.fire('Error', `No se pudo abrir la ventana de impresión: ${error.message}`, 'error');
+    }
   };
+
 
   //impresion masiva
   const handlePrintAll = async (inquilinos) => {
@@ -977,7 +1102,7 @@ const InquilinosList = () => {
             <p><strong>Periodo:</strong> ${inquilino.periodo}</p>
             <p><strong>Contrato:</strong> ${inquilino.contrato}</p>
             <p><strong>Inicio de contrato:</strong> ${inquilino.inicio_contrato}</p>
-            <p><strong>Duración de contrato:</strong> ${inquilino.duracion_contrato} meses</p>
+       
             <p><strong>Aumento:</strong> ${inquilino.aumento}</p>
             <p><strong>Estado:</strong> ${inquilino.alquileres_adeudados > 0 ? `${inquilino.alquileres_adeudados} meses adeudados` : 'Al día'}</p>
           </div>
@@ -987,7 +1112,7 @@ const InquilinosList = () => {
             <p><strong>Agua:</strong> ${new Intl.NumberFormat('es-AR').format(inquilino.agua_importe)}</p>
             <p><strong>Tasa:</strong> ${new Intl.NumberFormat('es-AR').format(inquilino.tasa_importe)}</p>
             <p><strong>Luz:</strong> ${new Intl.NumberFormat('es-AR').format(inquilino.luz_importe)}</p>
-            <p><strong>Total:</strong> ${new Intl.NumberFormat('es-AR').format(inquilino.importe_total)}</p>
+            <p><strong>Total:</strong>${new Intl.NumberFormat('es-AR').format(inquilino.importe_total)}</p>
           </div>
         </div>
   
@@ -1053,7 +1178,7 @@ const InquilinosList = () => {
             <p><strong>Periodo:</strong> ${inquilino.periodo}</p>
             <p><strong>Contrato:</strong> ${inquilino.contrato}</p>
             <p><strong>Inicio de contrato:</strong> ${inquilino.inicio_contrato}</p>
-            <p><strong>Duración de contrato:</strong> ${inquilino.duracion_contrato} meses</p>          
+             
             <p><strong>Aumento:</strong> ${inquilino.aumento}</p>
             <p><strong>Estado:</strong> ${inquilino.alquileres_adeudados > 0 ? `${inquilino.alquileres_adeudados} meses adeudados` : 'Al día'}</p>
           </div>
@@ -1064,7 +1189,7 @@ const InquilinosList = () => {
             <p><strong>Tasa:</strong> ${inquilino.tasa_importe}</p>
             <p><strong>Luz:</strong> ${inquilino.luz_importe}</p>
             <p><strong>Otros:</strong> ${inquilino.otros}</p>
-            <p><strong>Total:</strong> ${inquilino.importe_total}</p>
+            <p><strong>Total:</strong> ${new Intl.NumberFormat('es-AR').format(inquilino.importe_total)}</p>
           </div>
         </div>
   
@@ -1097,6 +1222,7 @@ const InquilinosList = () => {
     `;
 
     printWindow.document.write(content);
+    printWindow.document.close();
     setTimeout(() => {
       printWindow.print();
     }, 1000);
@@ -1105,6 +1231,7 @@ const InquilinosList = () => {
 
   const handleSendWhatsApp = (inquilino) => {
     const phoneNumber = inquilino.telefono.replace(/\D/g, ''); // Elimina todo lo que no sea número
+
 
     // Crear el mensaje del recibo con formato enriquecido
     const message = `
@@ -1123,7 +1250,6 @@ https://postimg.cc/mPst7Kzn
   📅 Período: ${inquilino.periodo}
   📄 Contrato: ${inquilino.contrato}
   📅 Inicio de contrato ${inquilino.inicio_contrato}
-  📅 Duración de contrato ${inquilino.duracion_contrato} meses
   📈 Aumento: ${inquilino.aumento}
   📊 Estado: ${inquilino.alquileres_adeudados > 0 ? `${inquilino.alquileres_adeudados} meses adeudados` : 'Al día'}
   
@@ -1154,10 +1280,13 @@ https://postimg.cc/mPst7Kzn
   if (isLoading) return <p>Cargando inquilinos...</p>;
   if (isError) return <p>Error al cargar inquilinos: {error.message}</p>;
 
-  const filteredInquilinos = inquilinos?.filter((inquilino) => {
+  // 1. Primero obtenemos TODOS los inquilinos (sin filtrar por búsqueda)
+  const allFilteredByPeriodo = filteredInquilinos || [];
+
+  // 2. Aplicamos el filtrado por búsqueda solo a los del período actual
+  const filteredBySearch = allFilteredByPeriodo.filter((inquilino) => {
     const searchLower = searchTerm.toLowerCase();
 
-    // Manejo seguro con optional chaining y valores por defecto
     const matchId = inquilino.id?.toString().includes(searchTerm) || false;
     const matchNombre = (inquilino.nombre?.toLowerCase() || '').includes(searchLower);
     const matchApellido = (inquilino.apellido?.toLowerCase() || '').includes(searchLower);
@@ -1174,28 +1303,47 @@ https://postimg.cc/mPst7Kzn
       matchGastos
     );
   })?.sort((a, b) => {
-    // Ordenación segura si apellido es null/undefined
     const apellidoA = a.apellido?.toLowerCase() || '';
     const apellidoB = b.apellido?.toLowerCase() || '';
     return apellidoA.localeCompare(apellidoB);
   }) || [];
 
-  const indexOfLastInquilino = (currentPage + 1) * inquilinosPerPage;
-  const indexOfFirstInquilino = currentPage * inquilinosPerPage;
-  const currentInquilinos = filteredInquilinos?.slice(indexOfFirstInquilino, indexOfLastInquilino);
+  const paginatedInquilinos = filteredBySearch.slice(
+    currentPage * inquilinosPerPage,
+    (currentPage + 1) * inquilinosPerPage
+  );
 
-  const formatFieldName = (fieldName) => {
-    return fieldName
-      .split('_')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
+  // eslint-disable-next-line no-unused-vars
+  const generatePeriodoOptions = () => {
+    const options = [];
+    const today = new Date();
+    let month = today.getMonth();
+    let year = today.getFullYear();
+
+    for (let i = 0; i < 12; i++) {
+      const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+        "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+
+      options.unshift(`${monthNames[month]} ${year}`);
+
+      month -= 1;
+      if (month < 0) {
+        month = 11;
+        year -= 1;
+      }
+    }
+
+    return options;
   };
 
   return (
     <div className="container mt-4">
       <div className="p-3 mb-4 bg-agregar text-white rounded shadow">
-        <h4 className="text-center mb-0">Lista de Inquilinos</h4>
+        <h4 className="text-center mb-0">
+          Lista de Inquilinos
+        </h4>
       </div>
+
 
       <div className="d-flex justify-content-between mb-3">
         <div className="search-container" style={{ flex: 1 }}>
@@ -1215,6 +1363,26 @@ https://postimg.cc/mPst7Kzn
           <i className="bi bi-printer me-2"></i>
           Imprimir Todos
         </button>
+        <button
+          className="btn btn-warning ms-2"
+          onClick={async () => {
+            const nuevoPeriodo = getCurrentPeriodo();
+            if (window.confirm(`¿Actualizar período a ${nuevoPeriodo} para TODOS los inquilinos?`)) {
+              try {
+                await api.post('/inquilinos/update-periodo', {
+                  periodo: nuevoPeriodo
+                });
+                refetch();
+                Swal.fire('Éxito', `Período actualizado a ${nuevoPeriodo}`, 'success');
+              } catch (error) {
+                Swal.fire('Error', error.message, 'error');
+              }
+            }
+          }}
+        >
+          <i className="bi bi-arrow-repeat me-2"></i>
+          Actualizar Períodos
+        </button>
       </div>
 
       <table className="table custom-table">
@@ -1233,84 +1401,10 @@ https://postimg.cc/mPst7Kzn
           </tr>
         </thead>
         <tbody>
-          {currentInquilinos?.map((inquilino, index) => {
+          {paginatedInquilinos?.map((inquilino, index) => {
             const timeRemaining = calculateTimeRemaining(inquilino.vencimiento_contrato);
             const contractStatus = getContractStatus(timeRemaining);
-
-            return (
-              <tr key={inquilino.id}>
-                <td>{currentPage * inquilinosPerPage + index + 1}</td>
-                <td>{inquilino.apellido || '-'}</td>
-                <td>{inquilino.nombre || '-'}</td>
-                <td>{inquilino.telefono || '-'}</td>
-                <td>{inquilino.propietario_direccion || '-'}</td>
-                <td>{formatDate(inquilino.inicio_contrato) || '-'}</td>
-
-                {/* Columna Fin Contrato - Solo muestra la fecha formateada */}
-                <td>{formatDate(inquilino.vencimiento_contrato) || '-'}</td>
-
-                {/* Columna Tiempo Restante - Muestra el cálculo con icono y color */}
-                <td>
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <i
-                      className={`${contractStatus.icon} me-2`}
-                      style={{ color: contractStatus.color }}
-                    ></i>
-                    <span style={{
-                      color: contractStatus.color,
-                      fontWeight: contractStatus.status === 'expired' ? 'bold' : 'normal'
-                    }}>
-                      {contractStatus.text}
-                    </span>
-                  </div>
-                </td>
-                <td>
-                  <button
-                    className="btn btn-sm me-2"
-                    style={{ backgroundColor: '#17a2b8', color: '#fff' }}
-                    onClick={() => handleViewClick(inquilino)}
-                  >
-                    <i className="bi bi-eye"></i>
-                  </button>
-                  <button
-                    className="btn btn-sm me-2"
-                    style={{ backgroundColor: '#007bff', color: '#fff' }}
-                    onClick={() => handleEditClick(inquilino)}
-                  >
-                    <i className="bi bi-pencil"></i>
-                  </button>
-                  <button
-                    className="btn btn-sm me-2"
-                    style={{ backgroundColor: '#dc3545', color: '#fff' }}
-                    onClick={() => handleDeleteClick(inquilino.id)}
-                  >
-                    <i className="bi bi-trash"></i>
-                  </button>
-                  <button
-                    className="btn btn-sm me-2"
-                    style={{ backgroundColor: '#7028a7', color: '#fff' }}
-                    onClick={() => handlePrint(inquilino)}
-                  >
-                    <i className="bi bi-printer"></i>
-                  </button>
-                  <button
-                    className="btn btn-sm me-2"
-                    style={{ backgroundColor: '#05933a', color: '#fff' }}
-                    onClick={() => handleSendWhatsApp(inquilino)}
-                  >
-                    <i className="bi bi-whatsapp"></i>
-                  </button>
-                  <button
-                    className="btn btn-sm me-2"
-                    style={{ backgroundColor: '#28a745', color: '#fff' }}
-                    onClick={() => handleSaveReceipt(inquilino)}
-                    title="Guardar recibo"
-                  >
-                    <i className="bi bi-save"></i>
-                  </button>
-                </td>
-              </tr>
-            );
+            return (<tr key={inquilino.id}><td>{currentPage * inquilinosPerPage + index + 1}</td><td>{inquilino.apellido || '-'}</td><td>{inquilino.nombre || '-'}</td><td>{inquilino.telefono || '-'}</td><td>{inquilino.propietario_direccion || '-'}</td><td>{formatDate(inquilino.inicio_contrato) || '-'}</td><td>{formatDate(inquilino.vencimiento_contrato) || '-'}</td><td><div style={{ display: 'flex', alignItems: 'center' }}><i className={`${contractStatus.icon} me-2`} style={{ color: contractStatus.color }}></i><span style={{ color: contractStatus.color, fontWeight: contractStatus.status === 'expired' ? 'bold' : 'normal' }}>{contractStatus.text}</span></div></td><td><button className="btn btn-sm me-2" style={{ backgroundColor: '#17a2b8', color: '#fff' }} onClick={() => handleViewClick(inquilino)}><i className="bi bi-eye"></i></button><button className="btn btn-sm me-2" style={{ backgroundColor: '#007bff', color: '#fff' }} onClick={() => handleEditClick(inquilino)}><i className="bi bi-pencil"></i></button><button className="btn btn-sm me-2" style={{ backgroundColor: '#dc3545', color: '#fff' }} onClick={() => handleDeleteClick(inquilino.id)}><i className="bi bi-trash"></i></button><button className="btn btn-sm me-2" style={{ backgroundColor: '#7028a7', color: '#fff' }} onClick={() => handlePrint(inquilino)}><i className="bi bi-printer"></i></button><button className="btn btn-sm me-2" style={{ backgroundColor: '#05933a', color: '#fff' }} onClick={() => handleSendWhatsApp(inquilino)}><i className="bi bi-whatsapp"></i></button><button className="btn btn-sm me-2" style={{ backgroundColor: '#28a745', color: '#fff' }} onClick={() => handleSaveReceipt(inquilino)} title="Guardar recibo"><i className="bi bi-save"></i></button></td></tr>);
           })}
         </tbody>
       </table>
@@ -1318,7 +1412,7 @@ https://postimg.cc/mPst7Kzn
       <ReactPaginate
         previousLabel={'Anterior'}
         nextLabel={'Siguiente'}
-        pageCount={Math.ceil(filteredInquilinos?.length / inquilinosPerPage)}
+        pageCount={Math.ceil(filteredBySearch.length / inquilinosPerPage)}
         marginPagesDisplayed={2}
         pageRangeDisplayed={5}
         onPageChange={handlePageChange}

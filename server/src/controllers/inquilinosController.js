@@ -151,60 +151,91 @@ const getInquilinoById = async (req, res) => {
   }
 };
 
+
+const updatePeriodo = async (req, res) => {
+  const { periodo } = req.body;
+  try {
+    await pool.query("UPDATE inquilinos SET periodo = $1", [periodo]);
+    res.status(200).json({ message: "Período actualizado" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+const updatePeriodoAll = async (req, res) => {
+  const { periodo } = req.body;
+  
+  try {
+    await pool.query("UPDATE inquilinos SET periodo = $1", [periodo]);
+    res.status(200).json({ message: "Período actualizado para todos los inquilinos" });
+  } catch (error) {
+    console.error("Error al actualizar el período:", error);
+    res.status(500).json({ error: error.message });
+  }
+};
 const addInquilino = async (req, res) => {
   const {
     nombre, apellido, telefono, inicio_contrato, vencimiento_contrato, periodo, contrato,
     aumento, propietario_nombre, propietario_direccion, propietario_localidad,
     alquileres_adeudados, gastos_adeudados,
-    alquileres_importe, agua_importe, luz_importe, tasa_importe, otros, importe_total, // <-- Ahora son strings o null/undefined
+    alquileres_importe, agua_importe, luz_importe, tasa_importe, otros
   } = req.body;
 
+  // Validación de campos obligatorios
   if (!nombre || !apellido || !telefono || !inicio_contrato || !vencimiento_contrato || !periodo || !contrato ||
     !propietario_nombre || !propietario_direccion || !propietario_localidad) {
     return res.status(400).json({ message: "Faltan datos obligatorios." });
   }
-  // Cambiá la validación en addInquilino y updateInquilino así:
-  if (!['si debe', 'no debe'].includes(alquileres_adeudados) || !['si debe', 'no debe'].includes(gastos_adeudados)) {
-    return res.status(400).json({
-      message: "Valores inválidos para campos de deuda. Use 'si debe' o 'no debe'"
-    });
-  }
 
-
+  // Convertir fechas
   const inicio_contratoISO = safeDateToISO(inicio_contrato);
   const vencimiento_contratoISO = safeDateToISO(vencimiento_contrato);
-  const alquileres_importe_parsed = parseNumericField(alquileres_importe);
-  const agua_importe_parsed = parseNumericField(agua_importe);
-  const luz_importe_parsed = parseNumericField(luz_importe);
-  const tasa_importe_parsed = parseNumericField(tasa_importe);
-  const otros_parsed = parseNumericField(otros); // Asegúrate que 'otros' SIEMPRE es numérico o null/vacío si lo parseas así
-  const importe_total_parsed = parseNumericField(importe_total);
+
+  // Función mejorada para parsear números con formato argentino
+  const parseArgentineNumber = (value) => {
+    if (value === null || value === undefined || value === '') return 0;
+    const strValue = String(value).trim();
+    
+    // Reemplazar punto como separador de miles y coma como decimal
+    const cleanedValue = strValue.replace(/\./g, '').replace(',', '.');
+    
+    const parsed = parseFloat(cleanedValue);
+    return isNaN(parsed) ? 0 : parsed;
+  };
+
+  // Parsear valores numéricos
+  const alquileres_importe_parsed = parseArgentineNumber(alquileres_importe);
+  const agua_importe_parsed = parseArgentineNumber(agua_importe);
+  const luz_importe_parsed = parseArgentineNumber(luz_importe);
+  const tasa_importe_parsed = parseArgentineNumber(tasa_importe);
+  const otros_parsed = parseArgentineNumber(otros);
+  
+  // Calcular importe total
+  const importe_total_parsed = 
+    alquileres_importe_parsed + 
+    agua_importe_parsed + 
+    luz_importe_parsed + 
+    tasa_importe_parsed + 
+    otros_parsed;
+
+  // Normalizar valores de deuda
+  const normalizeDeuda = (value) => {
+    if (value === 'Sí' || value === 'si debe' || value === true) return 'si debe';
+    return 'no debe'; // Valor por defecto
+  };
+
   try {
     const query = `
       INSERT INTO inquilinos (
-        nombre, apellido, telefono, inicio_contrato, vencimiento_contrato, periodo, contrato, aumento,
-        propietario_nombre, propietario_direccion, propietario_localidad,
-        alquileres_adeudados, gastos_adeudados, alquileres_importe,
-        agua_importe, luz_importe, tasa_importe, otros, importe_total
+        nombre, apellido, telefono, inicio_contrato, vencimiento_contrato, 
+        periodo, contrato, aumento, propietario_nombre, propietario_direccion, 
+        propietario_localidad, alquileres_adeudados, gastos_adeudados, 
+        alquileres_importe, agua_importe, luz_importe, tasa_importe, otros, importe_total
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
       RETURNING *;
     `;
 
-    const normalizeDeuda = (value) => {
-      if (value === 'Sí' || value === 'si debe') return 'si debe';
-      if (value === 'No' || value === 'no debe') return 'no debe';
-      return null;
-    };
-
-    const transformedAlquileres = normalizeDeuda(alquileres_adeudados);
-    const transformedGastos = normalizeDeuda(gastos_adeudados);
-
-    if (!transformedAlquileres || !transformedGastos) {
-      return res.status(400).json({
-        message: "Valores inválidos para campos de deuda."
-      });
-    }
     const values = [
       nombre,
       apellido,
@@ -217,26 +248,43 @@ const addInquilino = async (req, res) => {
       propietario_nombre,
       propietario_direccion,
       propietario_localidad,
-      transformedAlquileres,
-      transformedGastos,
+      normalizeDeuda(alquileres_adeudados),
+      normalizeDeuda(gastos_adeudados),
       alquileres_importe_parsed,
       agua_importe_parsed,
       luz_importe_parsed,
       tasa_importe_parsed,
       otros_parsed,
-      importe_total_parsed,
-      id
+      importe_total_parsed
     ];
 
-
     const result = await pool.query(query, values);
-    res.status(201).json({ message: "Inquilino agregado", data: result.rows[0] });
+    res.status(201).json({ 
+      message: "Inquilino agregado", 
+      data: result.rows[0] 
+    });
   } catch (err) {
-    console.error("Error al agregar el inquilino:", err.message);
-    res.status(500).json({ message: "Error al agregar el inquilino.", error: err.message });
+    console.error("Error al agregar el inquilino:", err);
+    res.status(500).json({ 
+      message: "Error al agregar el inquilino", 
+      error: err.message,
+      detail: err.detail,
+      query: err.query // Esto muestra la consulta que falló
+    });
   }
 };
 
+const getInquilinosByPeriodo = async (req, res) => {
+  try {
+    const { periodo } = req.query;
+    console.log("Buscando período:", periodo); // Para debug
+    
+    const inquilinos = await Inquilino.find({ periodo: periodo.trim() });
+    res.json(inquilinos);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
 // Actualizar un inquilino
 const updateInquilino = async (req, res) => {
   const { id } = req.params;
@@ -361,4 +409,4 @@ const generarRecibo = async (req, res) => {
   }
 };
 
-module.exports = { getAllInquilinos, getInquilinoById, addInquilino, updateInquilino, deleteInquilino, generarRecibo };
+module.exports = { updatePeriodoAll, updatePeriodo, getInquilinosByPeriodo, getAllInquilinos, getInquilinoById, addInquilino, updateInquilino, deleteInquilino, generarRecibo };

@@ -51,6 +51,30 @@ const AddInquilino = () => {
     }
   }, [watchStartDate, watchDuration, watchDurationType, setValue]);
 
+  // Establecer período automáticamente
+  useEffect(() => {
+    const today = new Date();
+    const currentDay = today.getDate();
+    let month = today.getMonth();
+    let year = today.getFullYear();
+    
+    if (currentDay > 20) {
+      month = month + 1;
+      if (month > 11) {
+        month = 0;
+        year = year + 1;
+      }
+    }
+    
+    const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+                       "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+    
+    setValue('periodo', `${monthNames[month]} ${year}`, {
+      shouldValidate: true,
+      shouldDirty: true
+    });
+  }, [setValue]);
+
   // Definición de campos para el formulario
   const camposInquilino = [
     { label: 'Nombre', name: 'nombre', required: true },
@@ -62,7 +86,12 @@ const AddInquilino = () => {
       pattern: /^\d+$/,
       message: "El teléfono solo debe contener números"
     },
-    { label: 'Contrato', name: 'contrato', required: true },
+    { 
+      label: 'Contrato', 
+      name: 'contrato', 
+      required: true,
+      placeholder: 'Ej: Vivienda, Departamento, Local, Galpón...'
+    },
     {
       label: 'Inicio del Contrato',
       name: 'inicio_contrato',
@@ -101,13 +130,15 @@ const AddInquilino = () => {
       name: 'periodo',
       required: true,
       type: 'text',
-      options: ['Mensual', 'Bimestral', 'Trimestral', 'Semestral', 'Anual']
+      readOnly: true
     },
     {
       label: 'Aumento',
       name: 'aumento',
       required: true,
-      type: 'text'
+      type: 'select',
+      options: ['Anual', 'Semestral', 'Trimestral', 'Bimestral'],
+      defaultValue: 'Anual'
     },
   ];
 
@@ -223,6 +254,7 @@ const AddInquilino = () => {
             type={campo.type || 'text'}
             className={`form-control dark-input ${errors[campo.name] ? 'is-invalid' : ''}`}
             readOnly={campo.readOnly}
+            placeholder={campo.placeholder || ''}
             min={campo.min}
             {...register(campo.name, {
               required: campo.required ? `${campo.label} es obligatorio` : false,
@@ -330,7 +362,6 @@ const AddInquilino = () => {
 };
 
 export default AddInquilino;
-
 
 
 

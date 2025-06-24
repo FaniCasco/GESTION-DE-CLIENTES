@@ -11,8 +11,11 @@ const {
   getInquilinoById,
   addInquilino,
   updateInquilino,
+  updatePeriodo,
+  updatePeriodoAll,
   deleteInquilino,
   generarRecibo,
+  
 } = require("../controllers/inquilinosController");
 
 
@@ -23,5 +26,6 @@ router.post("/", addInquilino); // Agregar un nuevo inquilino
 router.put("/:id", updateInquilino); // Actualizar un inquilino por ID
 router.delete("/:id", deleteInquilino); // Eliminar un inquilino por ID
 router.post("/generar-recibo", generarRecibo); // Nueva ruta para generar recibo
-
+router.post("/update-periodo", updatePeriodo);
+router.post("/update-periodo", updatePeriodoAll);
 module.exports = router;
