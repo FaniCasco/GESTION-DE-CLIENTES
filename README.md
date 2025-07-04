@@ -60,7 +60,7 @@ CREATE TABLE inquilinos (
 DB_HOST=ip de la maquina 1
 DB_PORT=5432
 DB_USER=postgres
-DB_PASSWORD=ParaguayS3660
+DB_PASSWORD=************
 DB_NAME=clientes
 PORT=3001
 ```
