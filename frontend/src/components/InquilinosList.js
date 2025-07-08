@@ -1406,7 +1406,7 @@ https://postimg.cc/mPst7Kzn
 
         
     <button
-      className="btn btn-success ms-2"
+      className="btn btn-excel ms-2"
       onClick={exportToExcel}
       title="Exportar a Excel"
     >
