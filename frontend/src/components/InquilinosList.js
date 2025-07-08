@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import * as XLSX from 'xlsx';
 import api from '../api/api';
 import { useSearchParams } from 'react-router-dom';
 import { useInquilinos } from '../features/inquilinos/useInquilinos';
@@ -216,7 +217,49 @@ const InquilinosList = () => {
     return isNaN(date.getTime()) ? null : date;
   };
 
+/************************************/
+const exportToExcel = () => {
+  // Crear un libro de Excel
+  const wb = XLSX.utils.book_new();
+  
+  // Preparar los datos (usamos filteredInquilinos para exportar los datos filtrados)
+  const data = filteredInquilinos.map(inquilino => ({
+    ID: inquilino.id,
+    Nombre: inquilino.nombre,
+    Apellido: inquilino.apellido,
+    Teléfono: inquilino.telefono,
+    'Inicio Contrato': formatDate(inquilino.inicio_contrato),
+    'Fin Contrato': formatDate(inquilino.vencimiento_contrato),
+    Período: inquilino.periodo,
+    Contrato: inquilino.contrato,
+    Propietario: inquilino.propietario_nombre,
+    Dirección: inquilino.propietario_direccion,
+    Localidad: inquilino.propietario_localidad,
+    'Alquiler Adeudado': inquilino.alquileres_adeudados === 'si debe' ? 'Sí' : 'No',
+    'Gastos Adeudados': inquilino.gastos_adeudados === 'si debe' ? 'Sí' : 'No',
+    'Importe Alquiler': inquilino.alquileres_importe,
+    'Importe Agua': inquilino.agua_importe,
+    'Importe Luz': inquilino.luz_importe,
+    'Importe Tasa': inquilino.tasa_importe,
+    'Otros Importes': inquilino.otros,
+    'Importe Total': inquilino.importe_total
+  }));
 
+  // Crear una hoja de cálculo
+  const ws = XLSX.utils.json_to_sheet(data);
+  
+  // Añadir la hoja al libro
+  XLSX.utils.book_append_sheet(wb, ws, "Inquilinos");
+  
+  // Generar el archivo y descargarlo
+  const fileName = `backup_inquilinos_${new Date().toISOString().split('T')[0]}.xlsx`;
+  XLSX.writeFile(wb, fileName);
+};
+
+
+
+
+/************************************ */
   // Agrega este useEffect al inicio de tus efectos
   useEffect(() => {
     if (allInquilinos) {
@@ -1360,6 +1403,18 @@ https://postimg.cc/mPst7Kzn
             onChange={handleSearchChange}
           />
         </div>
+
+        
+    <button
+      className="btn btn-success ms-2"
+      onClick={exportToExcel}
+      title="Exportar a Excel"
+    >
+      <i className="bi bi-file-earmark-excel me-2"></i>
+      Exportar
+    </button>
+
+
         <button
           className="btn btn-imprimir-todo ms-3"
           onClick={() => handlePrintAll(filteredInquilinos)}
